@@ -115,9 +115,10 @@ export class EquacaoWorkbookFactory {
   }
 
   private fillPfSheet(sheet: ExcelJS.Worksheet, rows: EscrituracaoRow[], competencia: Competencia): void {
-    const cpt = firstDayOfMonth(competencia);
+    const competenciaDate = firstDayOfMonth(competencia);
+    const cpt = lastDayOfCompetencia(shiftCompetencia(competencia, -1));
 
-    const monthCurrent = monthNameUpper(cpt);
+    const monthCurrent = monthNameUpper(competenciaDate);
     const monthPrev = monthNameUpper(new Date(competencia.ano, competencia.mes - 2, 1));
     const monthNext = monthNameUpper(new Date(competencia.ano, competencia.mes, 1));
 
@@ -190,9 +191,10 @@ export class EquacaoWorkbookFactory {
   }
 
   private fillPjSheet(sheet: ExcelJS.Worksheet, rows: EscrituracaoRow[], competencia: Competencia): void {
-    const cpt = firstDayOfMonth(competencia);
+    const competenciaDate = firstDayOfMonth(competencia);
+    const cpt = lastDayOfCompetencia(shiftCompetencia(competencia, -1));
 
-    const monthCurrent = monthNameUpper(cpt);
+    const monthCurrent = monthNameUpper(competenciaDate);
     const monthPrev = monthNameUpper(new Date(competencia.ano, competencia.mes - 2, 1));
     const monthNext = monthNameUpper(new Date(competencia.ano, competencia.mes, 1));
     const monthNext2 = monthNameUpper(new Date(competencia.ano, competencia.mes + 1, 1));
