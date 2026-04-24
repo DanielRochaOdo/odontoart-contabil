@@ -1,0 +1,7 @@
+export const KIT_MODELOS_EXCLUIDOS = new Set([
+  "KITS ORTODONTICOS - SEM ISS BB",
+  "KITS ORTODONTICOS - NF EXTERNO 3% -BB",
+]);
+
+export const ALIQ_5952 = 0.0465;
+export const CODIGO_5952 = 5952;

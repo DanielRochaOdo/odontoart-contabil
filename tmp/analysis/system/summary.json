@@ -1,0 +1,136 @@
+{
+  "competencia": "2026-03",
+  "entradaConhecidos": 281,
+  "entradaLiquidados": 291,
+  "excluidosKits": 5,
+  "excluidosValorZero": 0,
+  "conhecidosClassificados": 288,
+  "liquidadosClassificados": 288,
+  "lotesAdicionadosNoConhecido": 10,
+  "avisos": [],
+  "auditoria": {
+    "porGrupo": [
+      {
+        "origem": "CONHECIDOS",
+        "segmento": "CLINICO",
+        "tipoPessoa": "PF",
+        "quantidade": 130,
+        "totalVlBruto": 184823.94999999995,
+        "totalLiquido": 167491.62000000002,
+        "totalPago": 167491.62000000002,
+        "totalInss": 12144.499999999998,
+        "totalIss": 1959.1200000000001,
+        "totalIr": 3228.7100000000005
+      },
+      {
+        "origem": "CONHECIDOS",
+        "segmento": "CLINICO",
+        "tipoPessoa": "PJ",
+        "quantidade": 114,
+        "totalVlBruto": 308916.49999999994,
+        "totalLiquido": 305138.76999999996,
+        "totalPago": 305138.76999999996,
+        "totalInss": 0,
+        "totalIss": 3385.1,
+        "totalIr": 95.75999999999999
+      },
+      {
+        "origem": "CONHECIDOS",
+        "segmento": "ORTO",
+        "tipoPessoa": "PF",
+        "quantidade": 14,
+        "totalVlBruto": 46622,
+        "totalLiquido": 39692.82000000001,
+        "totalPago": 39692.82000000001,
+        "totalInss": 3077.04,
+        "totalIss": 932.4399999999998,
+        "totalIr": 2919.7
+      },
+      {
+        "origem": "CONHECIDOS",
+        "segmento": "ORTO",
+        "tipoPessoa": "PJ",
+        "quantidade": 30,
+        "totalVlBruto": 233308,
+        "totalLiquido": 227927.95999999996,
+        "totalPago": 227927.95999999996,
+        "totalInss": 0,
+        "totalIss": 4779.919999999999,
+        "totalIr": 146.37
+      },
+      {
+        "origem": "LIQUIDADOS",
+        "segmento": "CLINICO",
+        "tipoPessoa": "PF",
+        "quantidade": 130,
+        "totalVlBruto": 184823.95,
+        "totalLiquido": 167491.62000000005,
+        "totalPago": 167491.62000000005,
+        "totalInss": 12144.5,
+        "totalIss": 1959.12,
+        "totalIr": 3228.71
+      },
+      {
+        "origem": "LIQUIDADOS",
+        "segmento": "CLINICO",
+        "tipoPessoa": "PJ",
+        "quantidade": 114,
+        "totalVlBruto": 308916.50000000006,
+        "totalLiquido": 305138.77,
+        "totalPago": 305138.77,
+        "totalInss": 0,
+        "totalIss": 3385.100000000001,
+        "totalIr": 95.75999999999999
+      },
+      {
+        "origem": "LIQUIDADOS",
+        "segmento": "ORTO",
+        "tipoPessoa": "PF",
+        "quantidade": 14,
+        "totalVlBruto": 46622,
+        "totalLiquido": 39692.81999999999,
+        "totalPago": 39692.81999999999,
+        "totalInss": 3077.0400000000004,
+        "totalIss": 932.44,
+        "totalIr": 2919.7
+      },
+      {
+        "origem": "LIQUIDADOS",
+        "segmento": "ORTO",
+        "tipoPessoa": "PJ",
+        "quantidade": 30,
+        "totalVlBruto": 233308,
+        "totalLiquido": 227927.96,
+        "totalPago": 227927.96,
+        "totalInss": 0,
+        "totalIss": 4779.919999999999,
+        "totalIr": 146.37
+      }
+    ],
+    "lotesAdicionados": [
+      "47770",
+      "47773",
+      "47774",
+      "47814",
+      "47826",
+      "47832",
+      "47838",
+      "47864",
+      "47893",
+      "47984"
+    ],
+    "lotesSomenteConhecidos": [],
+    "lotesSomenteLiquidados": [
+      "47770",
+      "47773",
+      "47774",
+      "47814",
+      "47826",
+      "47832",
+      "47838",
+      "47864",
+      "47893",
+      "47984"
+    ]
+  }
+}
