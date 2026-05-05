@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
-import { Manrope, Sora } from "next/font/google";
+import { DM_Sans, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 
-const manrope = Manrope({
+const dmSans = DM_Sans({
   variable: "--font-body",
+  weight: ["400", "500"],
   subsets: ["latin"],
+  display: "swap",
 });
 
-const sora = Sora({
-  variable: "--font-display",
+const sourceCodePro = Source_Code_Pro({
+  variable: "--font-mono-code",
+  weight: ["400", "500"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Odontoart Contábil",
-  description: "Módulo Eventos para geração dos arquivos contabilidade.",
+  title: "Odontoart Contabil",
+  description: "Modulo de eventos e contraprestacoes para geracao contabil.",
 };
 
 export default function RootLayout({
@@ -25,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${manrope.variable} ${sora.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${sourceCodePro.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

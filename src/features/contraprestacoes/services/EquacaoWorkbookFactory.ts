@@ -17,7 +17,7 @@ function firstDayOfMonth(competencia: Competencia): Date {
 }
 
 function normalizeDate(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  return new Date(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
 }
 
 function compareYearMonth(date: Date, ano: number, mes: number): number {
@@ -44,31 +44,28 @@ function lastDayOfCompetencia(competencia: Competencia): Date {
 
 function resolvePfDueDate(value: Date | null, competencia: Competencia): Date {
   const firstCurrent = firstDayOfMonth(competencia);
-  const previousCompetencia = shiftCompetencia(competencia, -1);
   if (!value) return firstCurrent;
 
   const date = normalizeDate(value);
   const monthCompare = compareYearMonth(date, competencia.ano, competencia.mes);
-  if (monthCompare < 0) return lastDayOfCompetencia(previousCompetencia);
-  if (monthCompare > 0) return dayInCompetencia(competencia, 29);
-  if (date.getDate() === 31) return dayInCompetencia(competencia, 29);
+  if (monthCompare < 0) return firstCurrent;
+  if (monthCompare > 0) return dayInCompetencia(competencia, 30);
   return date;
 }
 
 function resolvePjDueDate(value: Date | null, competencia: Competencia): Date {
   const firstCurrent = firstDayOfMonth(competencia);
-  const previousCompetencia = shiftCompetencia(competencia, -1);
   const nextCompetencia = shiftCompetencia(competencia, 1);
   if (!value) return firstCurrent;
 
   const date = normalizeDate(value);
   const currentCompare = compareYearMonth(date, competencia.ano, competencia.mes);
-  if (currentCompare < 0) return lastDayOfCompetencia(previousCompetencia);
+  if (currentCompare < 0) return firstCurrent;
   if (currentCompare === 0) return date;
 
   const nextCompare = compareYearMonth(date, nextCompetencia.ano, nextCompetencia.mes);
   if (nextCompare === 0) return date;
-  return dayInCompetencia(nextCompetencia, date.getDate());
+  return dayInCompetencia(nextCompetencia, 30);
 }
 
 function monthNameUpper(date: Date): string {
