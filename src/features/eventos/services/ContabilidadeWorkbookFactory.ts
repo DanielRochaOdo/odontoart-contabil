@@ -550,7 +550,7 @@ export class ContabilidadeWorkbookFactory {
         [9, 10, 11, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32],
         [1, 2],
       );
-      row.getCell("C").numFmt = MONTH_YEAR_FORMAT;
+      row.getCell("C").numFmt = "0";
       applyFinancialFormat(row, [
         "I",
         "J",
@@ -739,7 +739,7 @@ export class ContabilidadeWorkbookFactory {
         [11, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30],
         [1, 2],
       );
-      row.getCell("C").numFmt = MONTH_YEAR_FORMAT;
+      row.getCell("C").numFmt = "0";
       applyFinancialFormat(row, [
         "K",
         "L",
