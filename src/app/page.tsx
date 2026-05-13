@@ -489,6 +489,11 @@ export default function Home() {
         setCanceladasError(payload.message);
       }
     } catch (error) {
+      setCanceladasRows([]);
+      setCanceladasAnosDisponiveis([]);
+      setCanceladasMesesDisponiveis([]);
+      setCanceladasTotal(0);
+      setCanceladasTotalPaginas(0);
       setCanceladasError(
         error instanceof Error
           ? error.message
@@ -745,7 +750,7 @@ export default function Home() {
     return (
       <>
         <header className={styles.header}>
-          <h1>Recebidas e Recuperadas</h1>
+          <h1>Contraprestacoes Emitidas</h1>
           <p>
             Fluxo integrado para tratar a base de Recebidas, classificar Recuperadas por
             cruzamento de parcela e gerar os arquivos de saida por canal.
@@ -794,7 +799,7 @@ export default function Home() {
                 ) : (
                   <Download size={15} />
                 )}
-                <span>Executar Fluxo Recebidas e Recuperadas</span>
+                <span>Executar Fluxo Emitidas</span>
               </button>
             </div>
           </form>
@@ -812,7 +817,7 @@ export default function Home() {
             {contrapStatus === "success" && (
               <p className={styles.successMsg}>
                 <CheckCircle2 size={16} />
-                Processamento concluido. O download da saida integrada foi iniciado.
+                Processamento concluido. O download da saida de Emitidas foi iniciado.
               </p>
             )}
 
@@ -1137,11 +1142,13 @@ export default function Home() {
             </p>
           )}
 
-          <p className={styles.infoMsg}>
-            Total registrado: {canceladasTotal.toLocaleString("pt-BR")} registros.
-          </p>
+          {!canceladasError && (
+            <p className={styles.infoMsg}>
+              Total registrado: {canceladasTotal.toLocaleString("pt-BR")} registros.
+            </p>
+          )}
 
-          {canceladasRows.length === 0 && !canceladasLoading && (
+          {!canceladasError && canceladasRows.length === 0 && !canceladasLoading && (
             <p className={styles.infoMsg}>Nenhum registro de Canceladas encontrado.</p>
           )}
 
@@ -1219,7 +1226,7 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Conferencia</h1>
           <p>
-            Painel para validacao final dos totais de Recebidas e Recuperadas antes do fechamento
+            Painel para validacao final dos totais de Emitidas e Recuperadas antes do fechamento
             contabil.
           </p>
         </header>
@@ -1438,10 +1445,10 @@ export default function Home() {
               <li>Navegue pelos resultados com paginação de 100 registros por pagina.</li>
             </ul>
 
-            <h3>3. Contraprestacoes Recebidas e Recuperadas</h3>
+            <h3>3. Contraprestacoes Emitidas</h3>
             <p>
               Informe a competencia, envie a base de Recebidas e execute o fluxo integrado para
-              gerar as saidas de Recebidas e Recuperadas.
+              gerar as saidas de Emitidas e Recuperadas.
             </p>
 
             <h3>4. Relatorios</h3>
@@ -1554,7 +1561,7 @@ export default function Home() {
                     setActiveContraprestacoesModule("recebidasRecuperadas");
                   }}
                 >
-                  Recebidas e Recuperadas
+                  Emitidas
                 </button>
                 <button
                   type="button"

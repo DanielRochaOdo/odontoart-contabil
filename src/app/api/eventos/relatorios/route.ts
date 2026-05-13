@@ -48,11 +48,14 @@ function toFriendlyQueryErrorMessage(rawMessage: string): string {
 export async function GET(request: Request) {
   const supabase = getSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({
-      rows: [],
-      message:
-        "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY validos para consultar o historico de Relatorios.",
-    });
+    return NextResponse.json(
+      {
+        rows: [],
+        message:
+          "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para consultar o historico de Relatorios.",
+      },
+      { status: 500 },
+    );
   }
 
   const url = new URL(request.url);

@@ -111,13 +111,16 @@ function mapRow(row: CanceladasDbRow) {
 export async function GET(request: Request) {
   const supabase = getSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({
-      rows: [],
-      filtrosDisponiveis: { anos: [], meses: [] },
-      paginacao: { pagina: 1, pageSize: 100, total: 0, totalPaginas: 0 },
-      message:
-        "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY validos para consultar Canceladas.",
-    });
+    return NextResponse.json(
+      {
+        rows: [],
+        filtrosDisponiveis: { anos: [], meses: [] },
+        paginacao: { pagina: 1, pageSize: 100, total: 0, totalPaginas: 0 },
+        message:
+          "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para consultar Canceladas.",
+      },
+      { status: 500 },
+    );
   }
 
   const url = new URL(request.url);
@@ -201,7 +204,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY validos para registrar Canceladas.",
+          "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para registrar Canceladas.",
       },
       { status: 500 },
     );

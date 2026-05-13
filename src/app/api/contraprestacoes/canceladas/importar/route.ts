@@ -236,7 +236,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY validos para importar Canceladas.",
+          "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para importar Canceladas.",
       },
       { status: 500 },
     );
