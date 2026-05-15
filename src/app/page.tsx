@@ -170,6 +170,24 @@ function isValidCompetencia(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}$/.test(value);
 }
 
+function downloadBlob(blob: Blob, fileName: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
+}
+
 function buildEmptyCanceladasForm(competencia: string): CanceladasManualForm {
   return {
     competencia,
@@ -311,7 +329,45 @@ export default function Home() {
   function handleEscrituracaoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setRecebidasFile(file);
-    void detectCompetenciaFromFile(file, "Base Recebidas", setContrapCompetenciaHint);
+    if (!file) {
+      setContrapCompetenciaHint("");
+      return;
+    }
+
+    void (async () => {
+      try {
+        const [{ CompetenciaDetector }, { parseCompetencia }] = await Promise.all([
+          import("@/features/eventos/services/CompetenciaDetector"),
+          import("@/features/eventos/services/utils"),
+        ]);
+
+        const detector = new CompetenciaDetector();
+        const detected = await detector.detect(
+          new Uint8Array(await file.arrayBuffer()),
+          file.name,
+        );
+
+        if (detected) {
+          const detectedValue = `${detected.ano}-${String(detected.mes).padStart(2, "0")}`;
+          setCompetencia(detectedValue);
+          setContrapCompetenciaHint(
+            `Competencia identificada localmente em Base Recebidas: ${detectedValue}.`,
+          );
+          return;
+        }
+
+        const fallback = parseCompetencia(undefined);
+        const fallbackValue = `${fallback.ano}-${String(fallback.mes).padStart(2, "0")}`;
+        setCompetencia(fallbackValue);
+        setContrapCompetenciaHint(
+          "Nao conseguimos identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+        );
+      } catch {
+        setContrapCompetenciaHint(
+          "Nao foi possivel identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+        );
+      }
+    })();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -377,41 +433,27 @@ export default function Home() {
     setContrapErrorMessage("");
     setContrapSummary(null);
 
-    const formData = new FormData();
-    formData.append("competencia", competencia);
-    formData.append("recebidas", recebidasFile);
-
     try {
-      const response = await fetch("/api/contraprestacoes/processar", {
-        method: "POST",
-        body: formData,
+      const { processContraprestacoesInBrowser } = await import(
+        "@/features/contraprestacoes/services/ContraprestacoesBrowserProcessor"
+      );
+      const result = await processContraprestacoesInBrowser({
+        competenciaRaw: competencia,
+        recebidasFile,
       });
 
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { message?: string }
-          | null;
-        throw new Error(payload?.message || DEFAULT_CONTRAP_ERROR);
+      if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
+        setCompetencia(result.competenciaDetectada);
+        setContrapCompetenciaHint(
+          `Competencia confirmada localmente em Base Recebidas: ${result.competenciaDetectada}.`,
+        );
       }
 
-      const summaryHeader = response.headers.get("x-odonto-contrap-summary");
-      if (summaryHeader) {
-        const decoded = atob(summaryHeader);
-        setContrapSummary(JSON.parse(decoded) as ContraprestacoesSummary);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download =
-        response.headers
-          .get("Content-Disposition")
-          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Contraprestacoes-Recebidas-Recuperadas.zip";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.URL.revokeObjectURL(url);
+      setContrapSummary(result.summary);
+      downloadBlob(
+        new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/zip" }),
+        result.fileName,
+      );
 
       setContrapStatus("success");
     } catch (error) {

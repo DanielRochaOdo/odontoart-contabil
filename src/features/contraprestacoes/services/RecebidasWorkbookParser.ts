@@ -17,7 +17,7 @@ function isValidRow(row: RecebidaRow): boolean {
 }
 
 export class RecebidasWorkbookParser {
-  async parse(fileBuffer: Buffer): Promise<RecebidaRow[]> {
+  async parse(fileBuffer: Uint8Array): Promise<RecebidaRow[]> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(fileBuffer as unknown as ExcelJS.Buffer);
 

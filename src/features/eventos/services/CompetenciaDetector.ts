@@ -160,7 +160,7 @@ function detectFromFilename(filename: string): Competencia | null {
 }
 
 export class CompetenciaDetector {
-  async detect(fileBuffer: Buffer, filename?: string): Promise<Competencia | null> {
+  async detect(fileBuffer: Uint8Array, filename?: string): Promise<Competencia | null> {
     const fromName = filename ? detectFromFilename(filename) : null;
     if (fromName) return fromName;
 

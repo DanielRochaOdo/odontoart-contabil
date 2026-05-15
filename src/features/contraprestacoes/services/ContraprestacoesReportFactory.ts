@@ -21,7 +21,7 @@ interface WorkbookDefinition {
 
 interface GeneratedWorkbook {
   fileName: string;
-  buffer: Buffer;
+  buffer: Uint8Array;
 }
 
 const DATE_FORMAT = "dd/mm/yyyy";
@@ -161,7 +161,7 @@ async function buildWorkbook(definition: WorkbookDefinition): Promise<GeneratedW
   const data = await workbook.xlsx.writeBuffer();
   return {
     fileName: definition.fileName,
-    buffer: Buffer.from(data),
+    buffer: new Uint8Array(data),
   };
 }
 

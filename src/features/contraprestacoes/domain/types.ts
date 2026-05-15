@@ -46,11 +46,11 @@ export interface ContraprestacoesSummary {
 
 export interface ContraprestacoesProcessInput {
   competencia: Competencia;
-  recebidasBuffer: Buffer;
+  recebidasBuffer: Uint8Array;
 }
 
 export interface ContraprestacoesProcessOutput {
   fileName: string;
-  fileBuffer: Buffer;
+  fileBuffer: Uint8Array;
   summary: ContraprestacoesSummary;
 }
