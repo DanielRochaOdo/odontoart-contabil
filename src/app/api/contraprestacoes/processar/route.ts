@@ -35,41 +35,41 @@ async function resolveCompetencia(
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const escrituracaoFile = formData.get("escrituracao");
+    const recebidasFile = formData.get("recebidas") ?? formData.get("escrituracao");
     const competenciaRaw = formData.get("competencia");
 
-    if (!(escrituracaoFile instanceof File)) {
+    if (!(recebidasFile instanceof File)) {
       return NextResponse.json(
-        { message: "Envie o arquivo de Escrituracao para gerar a Equacao." },
+        { message: "Envie o arquivo base de Recebidas para executar o fluxo de contraprestacoes." },
         { status: 400 },
       );
     }
 
-    if (!isXlsx(escrituracaoFile)) {
+    if (!isXlsx(recebidasFile)) {
       return NextResponse.json(
         { message: "Use arquivo no formato .xlsx para processamento de contraprestacoes." },
         { status: 400 },
       );
     }
 
-    const escrituracaoBuffer = Buffer.from(await escrituracaoFile.arrayBuffer());
+    const recebidasBuffer = Buffer.from(await recebidasFile.arrayBuffer());
     const competencia = await resolveCompetencia(
       competenciaRaw,
-      escrituracaoBuffer,
-      escrituracaoFile.name,
+      recebidasBuffer,
+      recebidasFile.name,
     );
 
     const processor = new ContraprestacoesProcessor();
     const result = await processor.process({
       competencia,
-      escrituracaoBuffer,
+      recebidasBuffer,
     });
 
     const summaryHeader = Buffer.from(JSON.stringify(result.summary), "utf8").toString("base64");
 
     return new NextResponse(new Uint8Array(result.fileBuffer), {
       headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${result.fileName}"`,
         "x-odonto-contrap-summary": summaryHeader,
       },

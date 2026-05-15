@@ -13,18 +13,20 @@ import {
 } from "react";
 import {
   AlertTriangle,
-  Building2,
+  Calculator,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleHelp,
   Download,
+  Edit3,
   FileSpreadsheet,
   FolderOpen,
   Layers3,
   LoaderCircle,
   RefreshCcw,
+  Trash2,
   X,
 } from "lucide-react";
 import styles from "./page.module.css";
@@ -43,9 +45,13 @@ interface ProcessSummary {
 
 interface ContraprestacoesSummary {
   competencia: string;
-  entradaEscrituracao: number;
-  saidaPf: number;
-  saidaPj: number;
+  entradaRecebidas: number;
+  registrosTratados: number;
+  recuperadas: number;
+  recebidas: number;
+  devolucoes: number;
+  arquivosGerados: number;
+  totalValorPagamento: number;
 }
 
 interface ReportRow {
@@ -154,8 +160,40 @@ function formatDateBr(value: string | null): string {
   return parsed.toLocaleDateString("pt-BR");
 }
 
+function formatCompetenciaBr(value: string): string {
+  const match = value.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return value;
+  return `${match[2]}/${match[1]}`;
+}
+
 function isValidCompetencia(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}$/.test(value);
+}
+
+function buildEmptyCanceladasForm(competencia: string): CanceladasManualForm {
+  return {
+    competencia,
+    codigo: "",
+    nome: "",
+    emissao: "",
+    vencimento: "",
+    valorEmitido: "",
+    numeroParc: "",
+    numeroNf: "",
+  };
+}
+
+function mapCanceladaRowToForm(row: CanceladaRow): CanceladasManualForm {
+  return {
+    competencia: row.competencia,
+    codigo: row.codigo,
+    nome: row.nome,
+    emissao: row.emissao ?? "",
+    vencimento: row.vencimento ?? "",
+    valorEmitido: row.valorEmitido ? String(row.valorEmitido) : "",
+    numeroParc: row.numeroParc,
+    numeroNf: row.numeroNf,
+  };
 }
 
 export default function Home() {
@@ -164,7 +202,7 @@ export default function Home() {
     useState<ContraprestacoesModule>("recebidasRecuperadas");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [contraprestacoesMenuOpen, setContraprestacoesMenuOpen] = useState(true);
-  const [competencia, setCompetencia] = useState("");
+  const [competencia, setCompetencia] = useState(() => currentMonth());
   const [knownFile, setKnownFile] = useState<File | null>(null);
   const [liquidFile, setLiquidFile] = useState<File | null>(null);
   const [status, setStatus] = useState<SubmitState>("idle");
@@ -172,7 +210,7 @@ export default function Home() {
   const [summary, setSummary] = useState<ProcessSummary | null>(null);
   const [competenciaHint, setCompetenciaHint] = useState("");
   const detectRequestRef = useRef(0);
-  const [escrituracaoFile, setEscrituracaoFile] = useState<File | null>(null);
+  const [recebidasFile, setRecebidasFile] = useState<File | null>(null);
   const [contrapStatus, setContrapStatus] = useState<SubmitState>("idle");
   const [contrapErrorMessage, setContrapErrorMessage] = useState("");
   const [contrapSummary, setContrapSummary] = useState<ContraprestacoesSummary | null>(null);
@@ -203,34 +241,19 @@ export default function Home() {
   const [canceladasManualOpen, setCanceladasManualOpen] = useState(false);
   const [canceladasFiltersOpen, setCanceladasFiltersOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [canceladasManualForm, setCanceladasManualForm] = useState<CanceladasManualForm>({
-    competencia: "",
-    codigo: "",
-    nome: "",
-    emissao: "",
-    vencimento: "",
-    valorEmitido: "",
-    numeroParc: "",
-    numeroNf: "",
-  });
+  const [canceladasEditingId, setCanceladasEditingId] = useState<number | null>(null);
+  const [canceladasManualForm, setCanceladasManualForm] = useState<CanceladasManualForm>(
+    () => buildEmptyCanceladasForm(currentMonth()),
+  );
 
   const canSubmit = useMemo(
     () => Boolean(knownFile && liquidFile && competencia) && status !== "loading",
     [knownFile, liquidFile, competencia, status],
   );
   const canSubmitContraprestacoes = useMemo(
-    () => Boolean(escrituracaoFile && competencia) && contrapStatus !== "loading",
-    [escrituracaoFile, competencia, contrapStatus],
+    () => Boolean(recebidasFile && competencia) && contrapStatus !== "loading",
+    [recebidasFile, competencia, contrapStatus],
   );
-
-  useEffect(() => {
-    const month = currentMonth();
-    setCompetencia((current) => current || month);
-    setCanceladasManualForm((current) => ({
-      ...current,
-      competencia: current.competencia || month,
-    }));
-  }, []);
 
   async function detectCompetenciaFromFile(
     file: File | null,
@@ -287,8 +310,8 @@ export default function Home() {
 
   function handleEscrituracaoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
-    setEscrituracaoFile(file);
-    void detectCompetenciaFromFile(file, "Escrituracao", setContrapCompetenciaHint);
+    setRecebidasFile(file);
+    void detectCompetenciaFromFile(file, "Base Recebidas", setContrapCompetenciaHint);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -348,7 +371,7 @@ export default function Home() {
 
   async function handleContraprestacoesSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!escrituracaoFile) return;
+    if (!recebidasFile) return;
 
     setContrapStatus("loading");
     setContrapErrorMessage("");
@@ -356,7 +379,7 @@ export default function Home() {
 
     const formData = new FormData();
     formData.append("competencia", competencia);
-    formData.append("escrituracao", escrituracaoFile);
+    formData.append("recebidas", recebidasFile);
 
     try {
       const response = await fetch("/api/contraprestacoes/processar", {
@@ -384,7 +407,7 @@ export default function Home() {
       anchor.download =
         response.headers
           .get("Content-Disposition")
-          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Faturamento-Equacao.xlsx";
+          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Contraprestacoes-Recebidas-Recuperadas.zip";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -561,44 +584,102 @@ export default function Home() {
     setCanceladasSuccess("");
 
     try {
-      const response = await fetch("/api/contraprestacoes/canceladas/registros", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          competencia: canceladasManualForm.competencia,
-          codigo: canceladasManualForm.codigo,
-          nome: canceladasManualForm.nome,
-          emissao: canceladasManualForm.emissao || null,
-          vencimento: canceladasManualForm.vencimento || null,
-          valorEmitido: canceladasManualForm.valorEmitido
-            ? Number(canceladasManualForm.valorEmitido)
-            : 0,
-          numeroParc: canceladasManualForm.numeroParc,
-          numeroNf: canceladasManualForm.numeroNf,
-        }),
-      });
+      const isEditing = canceladasEditingId !== null;
+      const response = await fetch(
+        isEditing
+          ? `/api/contraprestacoes/canceladas/registros/${canceladasEditingId}`
+          : "/api/contraprestacoes/canceladas/registros",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            competencia: canceladasManualForm.competencia,
+            codigo: canceladasManualForm.codigo,
+            nome: canceladasManualForm.nome,
+            emissao: canceladasManualForm.emissao || null,
+            vencimento: canceladasManualForm.vencimento || null,
+            valorEmitido: canceladasManualForm.valorEmitido
+              ? Number(canceladasManualForm.valorEmitido)
+              : 0,
+            numeroParc: canceladasManualForm.numeroParc,
+            numeroNf: canceladasManualForm.numeroNf,
+          }),
+        },
+      );
 
       const payload = (await response.json()) as { message?: string };
       if (!response.ok) {
-        throw new Error(payload.message ?? "Nao foi possivel incluir registro manual.");
+        throw new Error(
+          payload.message ??
+            (isEditing
+              ? "Nao foi possivel atualizar o registro."
+              : "Nao foi possivel incluir registro manual."),
+        );
       }
 
-      setCanceladasSuccess("Registro manual inserido com sucesso.");
-      setCanceladasManualForm((current) => ({
-        ...current,
-        codigo: "",
-        nome: "",
-        emissao: "",
-        vencimento: "",
-        valorEmitido: "",
-        numeroParc: "",
-        numeroNf: "",
-      }));
+      setCanceladasSuccess(
+        isEditing ? "Registro atualizado com sucesso." : "Registro manual inserido com sucesso.",
+      );
+      setCanceladasEditingId(null);
+      setCanceladasManualForm(buildEmptyCanceladasForm(canceladasManualForm.competencia));
       setCanceladasPage(1);
       await loadCanceladas({ page: 1 });
     } catch (error) {
       setCanceladasError(
-        error instanceof Error ? error.message : "Nao foi possivel incluir registro manual.",
+        error instanceof Error
+          ? error.message
+          : canceladasEditingId !== null
+            ? "Nao foi possivel atualizar o registro."
+            : "Nao foi possivel incluir registro manual.",
+      );
+    } finally {
+      setCanceladasLoading(false);
+    }
+  }
+
+  function handleCanceladasEdit(row: CanceladaRow) {
+    setCanceladasEditingId(row.id);
+    setCanceladasManualForm(mapCanceladaRowToForm(row));
+    setCanceladasManualOpen(true);
+    setCanceladasError("");
+    setCanceladasSuccess("");
+  }
+
+  function resetCanceladasManualForm() {
+    const competenciaBase = canceladasManualForm.competencia || currentMonth();
+    setCanceladasEditingId(null);
+    setCanceladasManualForm(buildEmptyCanceladasForm(competenciaBase));
+  }
+
+  async function handleCanceladasDelete(row: CanceladaRow) {
+    const confirmed = window.confirm(
+      `Excluir o registro ${row.codigo} - ${row.nome} da competencia ${row.competencia}?`,
+    );
+    if (!confirmed) return;
+
+    setCanceladasLoading(true);
+    setCanceladasError("");
+    setCanceladasSuccess("");
+
+    try {
+      const response = await fetch(`/api/contraprestacoes/canceladas/registros/${row.id}`, {
+        method: "DELETE",
+      });
+
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Nao foi possivel excluir o registro.");
+      }
+
+      if (canceladasEditingId === row.id) {
+        resetCanceladasManualForm();
+      }
+
+      setCanceladasSuccess("Registro excluido com sucesso.");
+      await loadCanceladas();
+    } catch (error) {
+      setCanceladasError(
+        error instanceof Error ? error.message : "Nao foi possivel excluir o registro.",
       );
     } finally {
       setCanceladasLoading(false);
@@ -750,14 +831,15 @@ export default function Home() {
     return (
       <>
         <header className={styles.header}>
-          <h1>Contraprestacoes Emitidas</h1>
+          <h1>Contraprestacoes Recebidas e Recuperadas</h1>
           <p>
-            Fluxo integrado para tratar a base de Recebidas, classificar Recuperadas por
-            cruzamento de parcela e gerar os arquivos de saida por canal.
+            Fluxo integrado para tratar a base de Recebidas, cruzar parcelas com Canceladas e
+            gerar os relatorios mensais de Recebidas e Recuperadas em pacote unico.
           </p>
           <p className={styles.ruleNote}>
-            A base de entrada e unica (Recebidas). As Recuperadas sao derivadas no mesmo fluxo,
-            com dependencia do historico de Canceladas para marcacao de parcelas.
+            O processamento aplica as tratativas operacionais da base, marca parcelas
+            recuperadas pelo historico de Canceladas e inclui a base tratada no pacote para
+            conferencia.
           </p>
         </header>
 
@@ -799,7 +881,7 @@ export default function Home() {
                 ) : (
                   <Download size={15} />
                 )}
-                <span>Executar Fluxo Emitidas</span>
+                <span>Executar Fluxo Recebidas / Recuperadas</span>
               </button>
             </div>
           </form>
@@ -817,7 +899,7 @@ export default function Home() {
             {contrapStatus === "success" && (
               <p className={styles.successMsg}>
                 <CheckCircle2 size={16} />
-                Processamento concluido. O download da saida de Emitidas foi iniciado.
+                Processamento concluido. O download do pacote de relatorios foi iniciado.
               </p>
             )}
 
@@ -825,9 +907,13 @@ export default function Home() {
               <div className={styles.summary}>
                 <h2>Resumo da Competencia {contrapSummary.competencia}</h2>
                 <ul>
-                  <li>Entradas Escrituracao: {contrapSummary.entradaEscrituracao}</li>
-                  <li>Saida PF Clinico: {contrapSummary.saidaPf}</li>
-                  <li>Saida PJ: {contrapSummary.saidaPj}</li>
+                  <li>Entradas Recebidas: {contrapSummary.entradaRecebidas}</li>
+                  <li>Registros tratados: {contrapSummary.registrosTratados}</li>
+                  <li>Parcelas Recuperadas: {contrapSummary.recuperadas}</li>
+                  <li>Parcelas Recebidas: {contrapSummary.recebidas}</li>
+                  <li>Devolucoes marcadas: {contrapSummary.devolucoes}</li>
+                  <li>Arquivos gerados: {contrapSummary.arquivosGerados}</li>
+                  <li>Total recebido na base: {formatCurrency(contrapSummary.totalValorPagamento)}</li>
                 </ul>
               </div>
             )}
@@ -847,8 +933,8 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Contraprestacoes Canceladas</h1>
           <p>
-            Modulo dedicado para importar a base mensal de canceladas, aplicar tratativas e
-            alimentar o consolidado historico.
+            Modulo dedicado para carga historica unica do consolidado de Canceladas e manutencao
+            mensal da base tratada com complementos manuais.
           </p>
         </header>
 
@@ -905,7 +991,7 @@ export default function Home() {
             className={styles.collapseTrigger}
             onClick={() => setCanceladasManualOpen((value) => !value)}
           >
-            <span>Inclusao Manual</span>
+            <span>{canceladasEditingId !== null ? "Edicao Manual" : "Inclusao Manual"}</span>
             <ChevronDown
               size={14}
               className={`${styles.menuCaret} ${canceladasManualOpen ? styles.menuCaretOpen : ""}`}
@@ -1039,7 +1125,17 @@ export default function Home() {
                   ) : (
                     <CheckCircle2 size={15} />
                   )}
-                  <span>Adicionar Registro Manual</span>
+                  <span>
+                    {canceladasEditingId !== null ? "Salvar Alteracoes" : "Adicionar Registro Manual"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={resetCanceladasManualForm}
+                  disabled={canceladasLoading}
+                >
+                  <span>Limpar Formulario</span>
                 </button>
               </div>
             </form>
@@ -1166,12 +1262,13 @@ export default function Home() {
                       <th>Valor Emitido</th>
                       <th>No Parc</th>
                       <th>No NF</th>
+                      <th>Acoes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {canceladasRows.map((row) => (
                       <tr key={row.id}>
-                        <td>{row.competencia}</td>
+                        <td>{formatCompetenciaBr(row.competencia)}</td>
                         <td>{row.codigo}</td>
                         <td>{row.nome}</td>
                         <td>{formatDateBr(row.emissao)}</td>
@@ -1179,6 +1276,28 @@ export default function Home() {
                         <td>{formatCurrency(row.valorEmitido)}</td>
                         <td>{row.numeroParc || "-"}</td>
                         <td>{row.numeroNf || "-"}</td>
+                        <td>
+                          <div className={styles.inlineActions}>
+                            <button
+                              type="button"
+                              className={styles.linkBtn}
+                              onClick={() => handleCanceladasEdit(row)}
+                              aria-label={`Editar registro ${row.codigo}`}
+                              title="Editar"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.linkBtn}
+                              onClick={() => void handleCanceladasDelete(row)}
+                              aria-label={`Excluir registro ${row.codigo}`}
+                              title="Excluir"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1226,8 +1345,8 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Conferencia</h1>
           <p>
-            Painel para validacao final dos totais de Emitidas e Recuperadas antes do fechamento
-            contabil.
+            Painel para validacao final dos totais de Recebidas, Recuperadas e saida consolidada
+            antes do fechamento contabil.
           </p>
         </header>
 
@@ -1445,10 +1564,10 @@ export default function Home() {
               <li>Navegue pelos resultados com paginação de 100 registros por pagina.</li>
             </ul>
 
-            <h3>3. Contraprestacoes Emitidas</h3>
+            <h3>3. Contraprestacoes Recebidas e Recuperadas</h3>
             <p>
               Informe a competencia, envie a base de Recebidas e execute o fluxo integrado para
-              gerar as saidas de Emitidas e Recuperadas.
+              classificar Recuperadas e gerar a saida consolidada.
             </p>
 
             <h3>4. Relatorios</h3>
@@ -1470,11 +1589,13 @@ export default function Home() {
     );
   }
 
+  const showContraprestacoesSubmenu = contraprestacoesMenuOpen;
+
   return (
     <div className={`${styles.app} ${sidebarCollapsed ? styles.appCollapsed : ""}`}>
       <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
         <div className={styles.brand}>
-          <Building2 className={styles.brandIcon} />
+          <Calculator className={styles.brandIcon} />
           {!sidebarCollapsed && <span className={styles.brandLabel}>Odontoart Contabil</span>}
           <button
             type="button"
@@ -1507,10 +1628,6 @@ export default function Home() {
               }`}
               title="Contraprestacoes"
               onClick={() => {
-                if (sidebarCollapsed) {
-                  setActiveModule("contraprestacoes");
-                  return;
-                }
                 setActiveModule("contraprestacoes");
                 setContraprestacoesMenuOpen((value) => !value);
               }}
@@ -1531,8 +1648,12 @@ export default function Home() {
               )}
             </button>
 
-            {!sidebarCollapsed && contraprestacoesMenuOpen && (
-              <div className={styles.subMenu}>
+            {showContraprestacoesSubmenu && (
+              <div
+                className={`${styles.subMenu} ${
+                  sidebarCollapsed ? styles.subMenuCollapsed : ""
+                }`}
+              >
                 <button
                   type="button"
                   className={`${styles.subMenuItem} ${
@@ -1544,6 +1665,7 @@ export default function Home() {
                   onClick={() => {
                     setActiveModule("contraprestacoes");
                     setActiveContraprestacoesModule("canceladas");
+                    if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
                   }}
                 >
                   Canceladas
@@ -1559,9 +1681,10 @@ export default function Home() {
                   onClick={() => {
                     setActiveModule("contraprestacoes");
                     setActiveContraprestacoesModule("recebidasRecuperadas");
+                    if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
                   }}
                 >
-                  Emitidas
+                  Recebidas / Recuperadas
                 </button>
                 <button
                   type="button"
@@ -1574,6 +1697,7 @@ export default function Home() {
                   onClick={() => {
                     setActiveModule("contraprestacoes");
                     setActiveContraprestacoesModule("conferencia");
+                    if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
                   }}
                 >
                   Conferencia

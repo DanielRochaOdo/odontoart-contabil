@@ -19,6 +19,9 @@ const sourceCodePro = Source_Code_Pro({
 export const metadata: Metadata = {
   title: "Odontoart Contabil",
   description: "Modulo de eventos e contraprestacoes para geracao contabil.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
