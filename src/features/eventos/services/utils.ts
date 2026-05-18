@@ -70,20 +70,62 @@ export function coerceDate(value: unknown): Date | null {
     return new Date(excelEpoch.getTime() + value * 86400000);
   }
   if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) return null;
+
+    const brMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      const [, dd, mm, yyyy] = brMatch;
+      const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      const [, yyyy, mm, dd] = isoMatch;
+      const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) return parsed;
   }
-  if (typeof value === "object" && value !== null && "result" in value) {
-    const formulaResult = (value as { result?: unknown }).result;
-    return coerceDate(formulaResult);
+  if (typeof value === "object" && value !== null) {
+    if ("result" in value) {
+      const formulaResult = (value as { result?: unknown }).result;
+      return coerceDate(formulaResult);
+    }
+    if ("text" in value) {
+      return coerceDate((value as { text?: unknown }).text);
+    }
+    if ("hyperlink" in value && "text" in value) {
+      return coerceDate((value as { text?: unknown }).text);
+    }
+    if ("richText" in value) {
+      const text = (value as { richText?: Array<{ text?: string }> }).richText
+        ?.map((item) => item.text ?? "")
+        .join("");
+      return coerceDate(text);
+    }
   }
   return null;
 }
 
 export function coerceNumber(value: unknown): number {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (typeof value === "object" && value !== null && "result" in value) {
-    return coerceNumber((value as { result?: unknown }).result);
+  if (typeof value === "object" && value !== null) {
+    if ("result" in value) {
+      return coerceNumber((value as { result?: unknown }).result);
+    }
+    if ("text" in value) {
+      return coerceNumber((value as { text?: unknown }).text);
+    }
+    if ("richText" in value) {
+      const text = (value as { richText?: Array<{ text?: string }> }).richText
+        ?.map((item) => item.text ?? "")
+        .join("");
+      return coerceNumber(text);
+    }
   }
   if (typeof value === "string") {
     const sanitized = value
@@ -98,9 +140,21 @@ export function coerceNumber(value: unknown): number {
 
 export function coerceString(value: unknown): string {
   if (value === null || value === undefined) return "";
-  if (typeof value === "object" && value !== null && "result" in value) {
-    return coerceString((value as { result?: unknown }).result);
+  if (typeof value === "object" && value !== null) {
+    if ("result" in value) {
+      return coerceString((value as { result?: unknown }).result);
+    }
+    if ("text" in value) {
+      return coerceString((value as { text?: unknown }).text);
+    }
+    if ("richText" in value) {
+      return (
+        (value as { richText?: Array<{ text?: string }> }).richText
+          ?.map((item) => item.text ?? "")
+          .join("")
+          .trim() ?? ""
+      );
+    }
   }
   return String(value).trim();
 }
-

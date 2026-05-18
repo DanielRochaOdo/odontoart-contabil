@@ -32,6 +32,18 @@ interface CreateCanceladaPayload {
 
 export const runtime = "nodejs";
 
+type CanceladasSortField =
+  | "competencia"
+  | "codigo"
+  | "nome"
+  | "emissao"
+  | "vencimento"
+  | "valorEmitido"
+  | "numeroParc"
+  | "numeroNf";
+
+type CanceladasSortDirection = "asc" | "desc";
+
 function toFriendlyQueryErrorMessage(rawMessage: string): string {
   const message = rawMessage.toLowerCase();
   if (message.includes("invalid api key")) {
@@ -86,6 +98,61 @@ function parseCompetencia(value: string | undefined): { competencia: string; ano
   return { competencia: `${ano}-${String(mes).padStart(2, "0")}`, ano, mes };
 }
 
+function getFilterReference(row: Pick<CanceladasDbRow, "ano" | "mes" | "vencimento">): {
+  ano: number | null;
+  mes: number | null;
+} {
+  if (row.vencimento) {
+    const match = row.vencimento.match(/^(\d{4})-(\d{2})-\d{2}$/);
+    if (match) {
+      return { ano: Number(match[1]), mes: Number(match[2]) };
+    }
+  }
+
+  return {
+    ano: Number.isInteger(row.ano) ? row.ano : null,
+    mes: Number.isInteger(row.mes) ? row.mes : null,
+  };
+}
+
+function parseSortField(value: string | null): CanceladasSortField {
+  switch (value) {
+    case "competencia":
+    case "codigo":
+    case "nome":
+    case "emissao":
+    case "vencimento":
+    case "valorEmitido":
+    case "numeroParc":
+    case "numeroNf":
+      return value;
+    default:
+      return "vencimento";
+  }
+}
+
+function parseSortDirection(value: string | null): CanceladasSortDirection {
+  return value === "asc" ? "asc" : "desc";
+}
+
+function compareText(left: string | null | undefined, right: string | null | undefined): number {
+  return (left ?? "").localeCompare(right ?? "", "pt-BR", { numeric: true, sensitivity: "base" });
+}
+
+function compareNumber(left: number, right: number): number {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
+function compareDate(left: string | null | undefined, right: string | null | undefined): number {
+  const leftValue = left ?? "";
+  const rightValue = right ?? "";
+  if (leftValue === rightValue) return 0;
+  if (!leftValue) return -1;
+  if (!rightValue) return 1;
+  return leftValue.localeCompare(rightValue);
+}
+
 function mapRow(row: CanceladasDbRow) {
   const valorEmitido =
     typeof row.valor_emitido === "number" ? row.valor_emitido : Number(row.valor_emitido ?? 0);
@@ -108,6 +175,43 @@ function mapRow(row: CanceladasDbRow) {
   };
 }
 
+async function fetchAllCanceladasImportacaoRows(): Promise<{
+  rows: CanceladasDbRow[];
+  errorMessage: string | null;
+}> {
+  const supabase = getSupabaseServerClient();
+  if (!supabase) {
+    return { rows: [], errorMessage: "Supabase indisponivel." };
+  }
+
+  const pageSize = 1000;
+  let from = 0;
+  const rows: CanceladasDbRow[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("contraprestacoes_canceladas_registros")
+      .select(
+        "id, competencia, ano, mes, cpt, codigo, nome, emissao, vencimento, valor_emitido, numero_parc, numero_nf, origem, criado_em",
+      )
+      .eq("origem", "IMPORTACAO")
+      .order("id", { ascending: false })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      return { rows: [], errorMessage: error.message };
+    }
+
+    const currentBatch = (data ?? []) as CanceladasDbRow[];
+    rows.push(...currentBatch);
+
+    if (currentBatch.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return { rows, errorMessage: null };
+}
+
 export async function GET(request: Request) {
   const supabase = getSupabaseServerClient();
   if (!supabase) {
@@ -126,47 +230,18 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const anos = parseNumericList(url.searchParams.get("anos"), 2000, 2100);
   const meses = parseNumericList(url.searchParams.get("meses"), 1, 12);
+  const numeroParc = normalizeText(url.searchParams.get("numeroParc"));
+  const sortBy = parseSortField(url.searchParams.get("sortBy"));
+  const sortDir = parseSortDirection(url.searchParams.get("sortDir"));
   const pageRaw = Number(url.searchParams.get("page") ?? "1");
   const pageSizeRaw = Number(url.searchParams.get("pageSize") ?? "100");
   const page = Number.isFinite(pageRaw) ? Math.max(1, Math.trunc(pageRaw)) : 1;
   const pageSize = Number.isFinite(pageSizeRaw) ? Math.min(Math.max(Math.trunc(pageSizeRaw), 1), 500) : 100;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const { rows: sourceRows, errorMessage } = await fetchAllCanceladasImportacaoRows();
 
-  let query = supabase
-    .from("contraprestacoes_canceladas_registros")
-    .select(
-      "id, competencia, ano, mes, cpt, codigo, nome, emissao, vencimento, valor_emitido, numero_parc, numero_nf, origem, criado_em",
-      { count: "exact" },
-    )
-    .order("ano", { ascending: false })
-    .order("mes", { ascending: false })
-    .order("id", { ascending: false })
-    .range(from, to);
-
-  if (anos.length > 0) query = query.in("ano", anos);
-  if (meses.length > 0) query = query.in("mes", meses);
-
-  const [{ data, error, count }, { data: filterData, error: filterError }] = await Promise.all([
-    query,
-    supabase
-      .from("contraprestacoes_canceladas_registros")
-      .select("ano, mes")
-      .order("ano", { ascending: false })
-      .order("mes", { ascending: false })
-      .limit(50000),
-  ]);
-
-  if (error) {
+  if (errorMessage) {
     return NextResponse.json(
-      { message: toFriendlyQueryErrorMessage(error.message) },
-      { status: 500 },
-    );
-  }
-
-  if (filterError) {
-    return NextResponse.json(
-      { message: toFriendlyQueryErrorMessage(filterError.message) },
+      { message: toFriendlyQueryErrorMessage(errorMessage) },
       { status: 500 },
     );
   }
@@ -174,23 +249,80 @@ export async function GET(request: Request) {
   const anosDisponiveis = new Set<number>();
   const mesesDisponiveis = new Set<number>();
 
-  (filterData ?? []).forEach((item) => {
-    const row = item as { ano?: number; mes?: number };
-    if (Number.isInteger(row.ano)) anosDisponiveis.add(Number(row.ano));
-    if (Number.isInteger(row.mes)) mesesDisponiveis.add(Number(row.mes));
+  sourceRows.forEach((row) => {
+    const reference = getFilterReference(row);
+    if (Number.isInteger(reference.ano)) anosDisponiveis.add(Number(reference.ano));
+    if (Number.isInteger(reference.mes)) mesesDisponiveis.add(Number(reference.mes));
   });
 
-  const resolvedTotal = Number.isFinite(count ?? NaN) ? Number(count) : 0;
+  const filteredRows = sourceRows.filter((row) => {
+    const reference = getFilterReference(row);
+    if (anos.length > 0 && (!reference.ano || !anos.includes(reference.ano))) return false;
+    if (meses.length > 0 && (!reference.mes || !meses.includes(reference.mes))) return false;
+    if (numeroParc && normalizeText(row.numero_parc) !== numeroParc) return false;
+    return true;
+  });
+
+  filteredRows.sort((left, right) => {
+    let result = 0;
+
+    switch (sortBy) {
+      case "competencia":
+        result = compareText(left.competencia, right.competencia);
+        break;
+      case "codigo":
+        result = compareText(left.codigo, right.codigo);
+        break;
+      case "nome":
+        result = compareText(left.nome, right.nome);
+        break;
+      case "emissao":
+        result = compareDate(left.emissao, right.emissao);
+        break;
+      case "vencimento":
+        result = compareDate(left.vencimento, right.vencimento);
+        break;
+      case "valorEmitido":
+        result = compareNumber(Number(left.valor_emitido ?? 0), Number(right.valor_emitido ?? 0));
+        break;
+      case "numeroParc":
+        result = compareText(left.numero_parc, right.numero_parc);
+        break;
+      case "numeroNf":
+        result = compareText(left.numero_nf, right.numero_nf);
+        break;
+    }
+
+    if (result === 0) {
+      result = compareNumber(left.id, right.id);
+    }
+
+    return sortDir === "asc" ? result : -result;
+  });
+
+  const totalValorEmitido = filteredRows.reduce((sum, row) => {
+    const value = typeof row.valor_emitido === "number" ? row.valor_emitido : Number(row.valor_emitido ?? 0);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
+
+  const resolvedTotal = filteredRows.length;
   const totalPaginas = resolvedTotal > 0 ? Math.ceil(resolvedTotal / pageSize) : 0;
+  const resolvedPage = totalPaginas > 0 ? Math.min(page, totalPaginas) : 1;
+  const from = (resolvedPage - 1) * pageSize;
+  const to = from + pageSize;
 
   return NextResponse.json({
-    rows: ((data ?? []) as CanceladasDbRow[]).map(mapRow),
+    rows: filteredRows.slice(from, to).map(mapRow),
+    resumo: {
+      totalRegistros: resolvedTotal,
+      totalValorEmitido,
+    },
     filtrosDisponiveis: {
       anos: Array.from(anosDisponiveis).sort((a, b) => b - a),
       meses: Array.from(mesesDisponiveis).sort((a, b) => a - b),
     },
     paginacao: {
-      pagina: page,
+      pagina: resolvedPage,
       pageSize,
       total: resolvedTotal,
       totalPaginas,

@@ -43,6 +43,12 @@ interface GeneratedWorkbook {
   buffer: Uint8Array;
 }
 
+export interface CanceladasProcessProgress {
+  value: number;
+  label: string;
+  detail: string;
+}
+
 export interface CanceladasProcessResult {
   competencia: string;
   registrosEntrada: number;
@@ -132,6 +138,16 @@ function createTreatedWorksheet(
   }
 }
 
+function createTreatedWorkbook(
+  source: ExcelJS.Worksheet,
+  lineNumbers: Set<number>,
+): ExcelJS.Workbook {
+  const workbook = new ExcelJS.Workbook();
+  const treatedSheet = workbook.addWorksheet("tratada");
+  createTreatedWorksheet(source, treatedSheet, lineNumbers);
+  return workbook;
+}
+
 function buildSourceRows(worksheet: ExcelJS.Worksheet): CanceladaSourceRow[] {
   const rows: CanceladaSourceRow[] = [];
 
@@ -210,9 +226,25 @@ async function serializeWorkbook(workbook: ExcelJS.Workbook): Promise<Uint8Array
 }
 
 export class CanceladasWorkbookProcessor {
-  async process(fileBuffer: Uint8Array, competencia: Competencia): Promise<CanceladasProcessResult> {
+  async process(
+    fileBuffer: Uint8Array,
+    competencia: Competencia,
+    onProgress?: (progress: CanceladasProcessProgress) => void,
+  ): Promise<CanceladasProcessResult> {
+    onProgress?.({
+      value: 14,
+      label: "Carregando workbook",
+      detail: "Abrindo o XLSX de Canceladas e lendo as abas do arquivo.",
+    });
+
     const sourceWorkbook = new ExcelJS.Workbook();
     await sourceWorkbook.xlsx.load(fileBuffer as unknown as ExcelJS.Buffer);
+
+    onProgress?.({
+      value: 24,
+      label: "Localizando aba original",
+      detail: "Buscando a aba original para iniciar o tratamento mensal.",
+    });
 
     const originalSheet =
       sourceWorkbook.worksheets.find((sheet) => {
@@ -227,28 +259,55 @@ export class CanceladasWorkbookProcessor {
       );
     }
 
+    onProgress?.({
+      value: 36,
+      label: "Lendo linhas da base",
+      detail: "Extraindo as colunas operacionais da aba original para montar a base de trabalho.",
+    });
+
     const sourceRows = buildSourceRows(originalSheet);
     const competenciaLastDay = lastDayOfMonth(competencia);
+
+    onProgress?.({
+      value: 48,
+      label: "Aplicando regras",
+      detail: "Filtrando registros por pagamento, emissao, lote e classificando PF/PJ.",
+    });
+
     const treatedRows = sourceRows.filter((row) => shouldKeepRow(row, competenciaLastDay));
     const pfRows = treatedRows.filter((row) => isCpf(row.cpfCnpj));
     const pjRows = treatedRows.filter((row) => !isCpf(row.cpfCnpj));
     const competenciaValue = competenciaToString(competencia);
     const cpt = competenciaToken(competencia);
 
-    const existingTreatedSheet = sourceWorkbook.getWorksheet("tratada");
-    if (existingTreatedSheet) sourceWorkbook.removeWorksheet(existingTreatedSheet.id);
-
     if (normalizeSheetName(originalSheet.name) !== "ORIGINAL") {
       originalSheet.name = "original";
     }
 
-    const treatedSheet = sourceWorkbook.addWorksheet("tratada");
+    onProgress?.({
+      value: 58,
+      label: "Montando base tratada",
+      detail: "Recriando a aba tratada com as linhas mantidas da competencia.",
+    });
+
     const treatedLineNumbers = new Set(treatedRows.map((row) => row.linhaOrigem));
-    createTreatedWorksheet(originalSheet, treatedSheet, treatedLineNumbers);
+    const treatedWorkbook = createTreatedWorkbook(originalSheet, treatedLineNumbers);
+
+    onProgress?.({
+      value: 68,
+      label: "Gerando planilhas finais",
+      detail: "Criando as planilhas PF e PJ com os dados tratados.",
+    });
 
     const finalWorkbook = new ExcelJS.Workbook();
     createFinalSheet(finalWorkbook, "PF", competencia, pfRows);
     createFinalSheet(finalWorkbook, "PJ", competencia, pjRows);
+
+    onProgress?.({
+      value: 76,
+      label: "Preparando importacao",
+      detail: "Montando os registros que serao enviados para o historico interno.",
+    });
 
     const rowsToImport: ImportedCanceladaRow[] = treatedRows.map((row) => ({
       competencia: competenciaValue,
@@ -265,6 +324,20 @@ export class CanceladasWorkbookProcessor {
       origem: "PROCESSAMENTO_MENSAL",
     }));
 
+    onProgress?.({
+      value: 84,
+      label: "Serializando base tratada",
+      detail: "Convertendo a base tratada novamente para XLSX.",
+    });
+    const treatedWorkbookBuffer = await serializeWorkbook(treatedWorkbook);
+
+    onProgress?.({
+      value: 92,
+      label: "Serializando planilha final",
+      detail: "Convertendo a planilha final PF/PJ para XLSX.",
+    });
+    const finalWorkbookBuffer = await serializeWorkbook(finalWorkbook);
+
     return {
       competencia: competenciaValue,
       registrosEntrada: sourceRows.length,
@@ -272,16 +345,16 @@ export class CanceladasWorkbookProcessor {
       registrosPf: pfRows.length,
       registrosPj: pjRows.length,
       rowsToImport,
-      generatedFiles: await Promise.all([
-        serializeWorkbook(sourceWorkbook).then((buffer) => ({
+      generatedFiles: [
+        {
           fileName: `BASE CANCELADAS ${cpt} - Tratada.xlsx`,
-          buffer,
-        })),
-        serializeWorkbook(finalWorkbook).then((buffer) => ({
+          buffer: treatedWorkbookBuffer,
+        },
+        {
           fileName: `Mensalidades Canceladas ${cpt}.xlsx`,
-          buffer,
-        })),
-      ]),
+          buffer: finalWorkbookBuffer,
+        },
+      ],
     };
   }
 }

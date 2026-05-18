@@ -116,6 +116,23 @@ type SubmitState = "idle" | "loading" | "success" | "error";
 type Module = "eventos" | "relatorios" | "contraprestacoes";
 type ContraprestacoesModule = "canceladas" | "recebidasRecuperadas" | "conferencia";
 type ReportsState = "idle" | "loading" | "ready" | "error";
+type CanceladasSortField =
+  | "competencia"
+  | "codigo"
+  | "nome"
+  | "emissao"
+  | "vencimento"
+  | "valorEmitido"
+  | "numeroParc"
+  | "numeroNf";
+type CanceladasSortDirection = "asc" | "desc";
+
+interface ActionProgress {
+  active: boolean;
+  value: number;
+  label: string;
+  detail: string;
+}
 
 const DEFAULT_ERROR =
   "Nao foi possivel processar os eventos agora. Confira os arquivos e tente novamente.";
@@ -163,6 +180,24 @@ function formatCompetenciaBr(value: string): string {
   return `${match[2]}/${match[1]}`;
 }
 
+function nextSortDirection(
+  currentField: CanceladasSortField,
+  currentDirection: CanceladasSortDirection,
+  nextField: CanceladasSortField,
+): CanceladasSortDirection {
+  if (currentField !== nextField) return "asc";
+  return currentDirection === "asc" ? "desc" : "asc";
+}
+
+function sortIndicator(
+  currentField: CanceladasSortField,
+  currentDirection: CanceladasSortDirection,
+  field: CanceladasSortField,
+): string {
+  if (currentField !== field) return "↕";
+  return currentDirection === "asc" ? "↑" : "↓";
+}
+
 function isValidCompetencia(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}$/.test(value);
 }
@@ -183,6 +218,23 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer;
+}
+
+function createIdleProgress(): ActionProgress {
+  return {
+    active: false,
+    value: 0,
+    label: "",
+    detail: "",
+  };
+}
+
+function clampProgress(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+async function flushProgressFrame(): Promise<void> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
 }
 
 async function detectCompetenciaLocally(
@@ -251,13 +303,23 @@ export default function Home() {
   const [canceladasPage, setCanceladasPage] = useState(1);
   const [canceladasPageSize] = useState(100);
   const [canceladasTotal, setCanceladasTotal] = useState(0);
+  const [canceladasTotalValorEmitido, setCanceladasTotalValorEmitido] = useState(0);
   const [canceladasTotalPaginas, setCanceladasTotalPaginas] = useState(0);
+  const [canceladasNumeroParcBusca, setCanceladasNumeroParcBusca] = useState("");
+  const [canceladasSortBy, setCanceladasSortBy] = useState<CanceladasSortField>("vencimento");
+  const [canceladasSortDir, setCanceladasSortDir] = useState<CanceladasSortDirection>("desc");
   const [canceladasImportOpen, setCanceladasImportOpen] = useState(false);
   const [canceladasProcessOpen, setCanceladasProcessOpen] = useState(true);
   const [canceladasFiltersOpen, setCanceladasFiltersOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [canceladasProcessSummary, setCanceladasProcessSummary] =
     useState<CanceladasProcessSummary | null>(null);
+  const [eventosProgress, setEventosProgress] = useState<ActionProgress>(createIdleProgress);
+  const [contrapProgress, setContrapProgress] = useState<ActionProgress>(createIdleProgress);
+  const [canceladasImportProgress, setCanceladasImportProgress] =
+    useState<ActionProgress>(createIdleProgress);
+  const [canceladasProcessProgress, setCanceladasProcessProgress] =
+    useState<ActionProgress>(createIdleProgress);
 
   const canSubmit = useMemo(
     () => Boolean(knownFile && liquidFile && competencia) && status !== "loading",
@@ -364,8 +426,15 @@ export default function Home() {
     if (!knownFile || !liquidFile) return;
 
     setStatus("loading");
+    setEventosProgress({
+      active: true,
+      value: 8,
+      label: "Preparando envio",
+      detail: `Validando ${knownFile.name} e ${liquidFile.name} antes do processamento.`,
+    });
     setErrorMessage("");
     setSummary(null);
+    await flushProgressFrame();
 
     const formData = new FormData();
     formData.append("competencia", competencia);
@@ -373,6 +442,14 @@ export default function Home() {
     formData.append("liquidados", liquidFile);
 
     try {
+      setEventosProgress({
+        active: true,
+        value: 28,
+        label: "Enviando arquivos",
+        detail: "Transmitindo as bases de Conhecidos e Liquidados para o processamento.",
+      });
+      await flushProgressFrame();
+
       const response = await fetch("/api/eventos/processar", {
         method: "POST",
         body: formData,
@@ -384,6 +461,14 @@ export default function Home() {
           | null;
         throw new Error(payload?.message || DEFAULT_ERROR);
       }
+
+      setEventosProgress({
+        active: true,
+        value: 72,
+        label: "Lendo resultado",
+        detail: "Recebendo o pacote consolidado e o resumo da competencia processada.",
+      });
+      await flushProgressFrame();
 
       const summaryHeader = response.headers.get("x-odonto-summary");
       if (summaryHeader) {
@@ -404,14 +489,24 @@ export default function Home() {
       anchor.remove();
       window.URL.revokeObjectURL(url);
 
+      setEventosProgress({
+        active: true,
+        value: 100,
+        label: "Concluido",
+        detail: "Pacote de arquivos da contabilidade pronto para download.",
+      });
       setStatus("success");
       if (activeModule === "relatorios") {
         void loadReports();
       }
     } catch (error) {
       setStatus("error");
+      setEventosProgress(createIdleProgress());
       setErrorMessage(error instanceof Error ? error.message : DEFAULT_ERROR);
+      return;
     }
+
+    window.setTimeout(() => setEventosProgress(createIdleProgress()), 1800);
   }
 
   async function handleContraprestacoesSubmit(event: FormEvent<HTMLFormElement>) {
@@ -419,13 +514,37 @@ export default function Home() {
     if (!recebidasFile) return;
 
     setContrapStatus("loading");
+    setContrapProgress({
+      active: true,
+      value: 10,
+      label: "Abrindo planilha",
+      detail: `Lendo ${recebidasFile.name} para identificar competencia e preparar o fluxo.`,
+    });
     setContrapErrorMessage("");
     setContrapSummary(null);
+    await flushProgressFrame();
 
     try {
+      setContrapProgress({
+        active: true,
+        value: 24,
+        label: "Carregando motor local",
+        detail: "Preparando o processamento local de Recebidas e Recuperadas.",
+      });
+      await flushProgressFrame();
+
       const { processContraprestacoesInBrowser } = await import(
         "@/features/contraprestacoes/services/ContraprestacoesBrowserProcessor"
       );
+
+      setContrapProgress({
+        active: true,
+        value: 48,
+        label: "Processando base",
+        detail: "Tratando linhas da base, cruzando parcelas com Canceladas e montando os relatorios.",
+      });
+      await flushProgressFrame();
+
       const result = await processContraprestacoesInBrowser({
         competenciaRaw: competencia,
         recebidasFile,
@@ -439,16 +558,35 @@ export default function Home() {
       }
 
       setContrapSummary(result.summary);
+
+      setContrapProgress({
+        active: true,
+        value: 82,
+        label: "Gerando pacote",
+        detail: "Compactando a base tratada e os relatorios finais para download.",
+      });
+      await flushProgressFrame();
+
       downloadBlob(
         new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/zip" }),
         result.fileName,
       );
 
+      setContrapProgress({
+        active: true,
+        value: 100,
+        label: "Concluido",
+        detail: "Pacote de Recebidas e Recuperadas pronto para download.",
+      });
       setContrapStatus("success");
     } catch (error) {
       setContrapStatus("error");
+      setContrapProgress(createIdleProgress());
       setContrapErrorMessage(error instanceof Error ? error.message : DEFAULT_CONTRAP_ERROR);
+      return;
     }
+
+    window.setTimeout(() => setContrapProgress(createIdleProgress()), 1800);
   }
 
   const loadReports = useCallback(async () => {
@@ -494,7 +632,14 @@ export default function Home() {
   }, [reportCompetencia]);
 
   const loadCanceladas = useCallback(
-    async (override?: { ano?: string; mes?: string; page?: number }) => {
+    async (override?: {
+      ano?: string;
+      mes?: string;
+      page?: number;
+      numeroParc?: string;
+      sortBy?: CanceladasSortField;
+      sortDir?: CanceladasSortDirection;
+    }) => {
     setCanceladasLoading(true);
     setCanceladasError("");
     setCanceladasSuccess("");
@@ -503,6 +648,9 @@ export default function Home() {
       const anoAtivo = override?.ano ?? canceladasAnoSelecionado;
       const mesAtivo = override?.mes ?? canceladasMesSelecionado;
       const pageAtiva = override?.page ?? canceladasPage;
+      const numeroParcAtivo = override?.numeroParc ?? canceladasNumeroParcBusca;
+      const sortByAtivo = override?.sortBy ?? canceladasSortBy;
+      const sortDirAtivo = override?.sortDir ?? canceladasSortDir;
       const params = new URLSearchParams();
       if (anoAtivo) {
         params.set("anos", anoAtivo);
@@ -510,8 +658,13 @@ export default function Home() {
       if (mesAtivo) {
         params.set("meses", mesAtivo);
       }
+      if (numeroParcAtivo) {
+        params.set("numeroParc", numeroParcAtivo);
+      }
       params.set("page", String(pageAtiva));
       params.set("pageSize", String(canceladasPageSize));
+      params.set("sortBy", sortByAtivo);
+      params.set("sortDir", sortDirAtivo);
 
       const response = await fetch(
         `/api/contraprestacoes/canceladas/registros?${params.toString()}`,
@@ -520,6 +673,7 @@ export default function Home() {
 
       const payload = (await response.json()) as {
         rows?: CanceladaRow[];
+        resumo?: { totalRegistros?: number; totalValorEmitido?: number };
         filtrosDisponiveis?: { anos?: number[]; meses?: number[] };
         paginacao?: { pagina?: number; pageSize?: number; total?: number; totalPaginas?: number };
         message?: string;
@@ -534,7 +688,8 @@ export default function Home() {
       setCanceladasRows(payload.rows ?? []);
       setCanceladasAnosDisponiveis(payload.filtrosDisponiveis?.anos ?? []);
       setCanceladasMesesDisponiveis(payload.filtrosDisponiveis?.meses ?? []);
-      setCanceladasTotal(payload.paginacao?.total ?? 0);
+      setCanceladasTotal(payload.resumo?.totalRegistros ?? 0);
+      setCanceladasTotalValorEmitido(payload.resumo?.totalValorEmitido ?? 0);
       setCanceladasTotalPaginas(payload.paginacao?.totalPaginas ?? 0);
       if (payload.paginacao?.pagina && payload.paginacao.pagina !== canceladasPage) {
         setCanceladasPage(payload.paginacao.pagina);
@@ -547,6 +702,7 @@ export default function Home() {
       setCanceladasAnosDisponiveis([]);
       setCanceladasMesesDisponiveis([]);
       setCanceladasTotal(0);
+      setCanceladasTotalValorEmitido(0);
       setCanceladasTotalPaginas(0);
       setCanceladasError(
         error instanceof Error
@@ -557,7 +713,15 @@ export default function Home() {
       setCanceladasLoading(false);
     }
     },
-    [canceladasAnoSelecionado, canceladasMesSelecionado, canceladasPage, canceladasPageSize],
+    [
+      canceladasAnoSelecionado,
+      canceladasMesSelecionado,
+      canceladasNumeroParcBusca,
+      canceladasPage,
+      canceladasPageSize,
+      canceladasSortBy,
+      canceladasSortDir,
+    ],
   );
 
   async function handleCanceladasImportSubmit(event: FormEvent<HTMLFormElement>) {
@@ -565,13 +729,28 @@ export default function Home() {
     if (!canceladasImportFile) return;
 
     setCanceladasLoading(true);
+    setCanceladasImportProgress({
+      active: true,
+      value: 10,
+      label: "Preparando importacao",
+      detail: `Lendo ${canceladasImportFile.name} para carregar a base historica de Canceladas.`,
+    });
     setCanceladasError("");
     setCanceladasSuccess("");
     setCanceladasProcessSummary(null);
+    await flushProgressFrame();
 
     try {
       const formData = new FormData();
       formData.append("arquivo", canceladasImportFile);
+
+      setCanceladasImportProgress({
+        active: true,
+        value: 32,
+        label: "Enviando arquivo",
+        detail: "Transmitindo a base consolidada para importacao no servidor.",
+      });
+      await flushProgressFrame();
 
       const response = await fetch("/api/contraprestacoes/canceladas/importar", {
         method: "POST",
@@ -588,6 +767,14 @@ export default function Home() {
         throw new Error(payload.message ?? "Nao foi possivel importar a base de Canceladas.");
       }
 
+      setCanceladasImportProgress({
+        active: true,
+        value: 76,
+        label: "Atualizando base interna",
+        detail: "Importacao concluida. Atualizando a listagem historica visivel na tela.",
+      });
+      await flushProgressFrame();
+
       const competenciasTexto =
         payload.competencias && payload.competencias.length > 0
           ? ` Competencias: ${payload.competencias.join(", ")}.`
@@ -598,7 +785,14 @@ export default function Home() {
       setCanceladasImportFile(null);
       setCanceladasPage(1);
       await loadCanceladas({ page: 1 });
+      setCanceladasImportProgress({
+        active: true,
+        value: 100,
+        label: "Concluido",
+        detail: "Base historica de Canceladas importada e listagem atualizada.",
+      });
     } catch (error) {
+      setCanceladasImportProgress(createIdleProgress());
       setCanceladasError(
         error instanceof Error
           ? error.message
@@ -607,6 +801,8 @@ export default function Home() {
     } finally {
       setCanceladasLoading(false);
     }
+
+    window.setTimeout(() => setCanceladasImportProgress(createIdleProgress()), 1800);
   }
 
   async function handleCanceladasProcessSubmit(event: FormEvent<HTMLFormElement>) {
@@ -614,17 +810,40 @@ export default function Home() {
     if (!canceladasProcessFile) return;
 
     setCanceladasLoading(true);
+    setCanceladasProcessProgress({
+      active: true,
+      value: 8,
+      label: "Abrindo planilha",
+      detail: `Lendo ${canceladasProcessFile.name} para validar competencia e localizar a aba original.`,
+    });
     setCanceladasError("");
     setCanceladasSuccess("");
     setCanceladasProcessSummary(null);
+    await flushProgressFrame();
 
     try {
-      const { processCanceladasInBrowser } = await import(
-        "@/features/contraprestacoes/services/CanceladasBrowserProcessor"
+      const { processCanceladasInWorker } = await import(
+        "@/features/contraprestacoes/services/CanceladasWorkerClient"
       );
-      const result = await processCanceladasInBrowser({
+
+      setCanceladasProcessProgress({
+        active: true,
+        value: 16,
+        label: "Iniciando segundo plano",
+        detail: "Movendo o processamento pesado para um worker para evitar travamento da tela.",
+      });
+      await flushProgressFrame();
+
+      const result = await processCanceladasInWorker({
         competenciaRaw: competencia,
         file: canceladasProcessFile,
+      }, (progress) => {
+        setCanceladasProcessProgress({
+          active: true,
+          value: progress.value,
+          label: progress.label,
+          detail: progress.detail,
+        });
       });
 
       if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
@@ -634,45 +853,40 @@ export default function Home() {
         );
       }
 
-      const response = await fetch("/api/contraprestacoes/canceladas/processar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          competencia: result.result.competencia,
-          rowsToImport: result.result.rowsToImport,
-        }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-        throw new Error(
-          payload?.message ?? "Nao foi possivel processar a base mensal de Canceladas.",
-        );
-      }
-
       setCanceladasProcessSummary({
         competencia: result.result.competencia,
         registrosEntrada: result.result.registrosEntrada,
         registrosTratados: result.result.registrosTratados,
         registrosPf: result.result.registrosPf,
         registrosPj: result.result.registrosPj,
-        registrosImportados: result.result.rowsToImport.length,
+        registrosImportados: 0,
         arquivosGerados: result.result.generatedFiles.length,
       });
+
+      setCanceladasProcessProgress({
+        active: true,
+        value: 88,
+        label: "Gerando download",
+        detail: "Compactando a base tratada e a planilha final para baixar o pacote mensal.",
+      });
+      await flushProgressFrame();
 
       downloadBlob(
         new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/zip" }),
         result.fileName,
       );
       setCanceladasSuccess(
-        "Processamento mensal concluido. O pacote com a base tratada e a planilha final foi baixado e a base historica interna foi atualizada.",
+        "Processamento mensal concluido. O pacote com a base tratada e a planilha final foi baixado.",
       );
       setCanceladasProcessFile(null);
-      setCanceladasPage(1);
-      await loadCanceladas({ page: 1 });
+      setCanceladasProcessProgress({
+        active: true,
+        value: 100,
+        label: "Concluido",
+        detail: "Processamento mensal finalizado e pacote mensal baixado.",
+      });
     } catch (error) {
+      setCanceladasProcessProgress(createIdleProgress());
       setCanceladasError(
         error instanceof Error
           ? error.message
@@ -681,6 +895,28 @@ export default function Home() {
     } finally {
       setCanceladasLoading(false);
     }
+
+    window.setTimeout(() => setCanceladasProcessProgress(createIdleProgress()), 1800);
+  }
+
+  function renderActionProgress(progress: ActionProgress) {
+    if (!progress.active) return null;
+
+    return (
+      <div className={styles.progressCard} aria-live="polite">
+        <div className={styles.progressHeader}>
+          <strong>{progress.label}</strong>
+          <span>{clampProgress(progress.value)}%</span>
+        </div>
+        <div className={styles.progressBarTrack} role="progressbar" aria-valuenow={clampProgress(progress.value)} aria-valuemin={0} aria-valuemax={100}>
+          <div
+            className={styles.progressBarFill}
+            style={{ width: `${clampProgress(progress.value)}%` }}
+          />
+        </div>
+        <p className={styles.progressDetail}>{progress.detail}</p>
+      </div>
+    );
   }
 
   function handleCanceladasPageChange(nextPage: number) {
@@ -688,6 +924,14 @@ export default function Home() {
     if (canceladasTotalPaginas > 0 && nextPage > canceladasTotalPaginas) return;
     setCanceladasPage(nextPage);
     void loadCanceladas({ page: nextPage });
+  }
+
+  function handleCanceladasSort(field: CanceladasSortField) {
+    const nextDirection = nextSortDirection(canceladasSortBy, canceladasSortDir, field);
+    setCanceladasSortBy(field);
+    setCanceladasSortDir(nextDirection);
+    setCanceladasPage(1);
+    void loadCanceladas({ page: 1, sortBy: field, sortDir: nextDirection });
   }
 
   useEffect(() => {
@@ -772,6 +1016,7 @@ export default function Home() {
                 )}
                 <span>Exportar Arquivos Contabilidade</span>
               </button>
+              {renderActionProgress(eventosProgress)}
             </div>
           </form>
         </section>
@@ -880,6 +1125,7 @@ export default function Home() {
                 )}
                 <span>Executar Fluxo Recebidas / Recuperadas</span>
               </button>
+              {renderActionProgress(contrapProgress)}
             </div>
           </form>
         </section>
@@ -977,6 +1223,7 @@ export default function Home() {
                   )}
                   <span>Importar XLSX</span>
                 </button>
+                {renderActionProgress(canceladasImportProgress)}
               </div>
             </form>
           )}
@@ -1038,6 +1285,7 @@ export default function Home() {
                   )}
                   <span>Processar Base Mensal</span>
                 </button>
+                {renderActionProgress(canceladasProcessProgress)}
               </div>
             </form>
           )}
@@ -1049,7 +1297,7 @@ export default function Home() {
             className={styles.collapseTrigger}
             onClick={() => setCanceladasFiltersOpen((value) => !value)}
           >
-            <span>Filtros de Ano e Mes</span>
+            <span>Filtros de Ano e Mes por Vencimento</span>
             <ChevronDown
               size={14}
               className={`${styles.menuCaret} ${canceladasFiltersOpen ? styles.menuCaretOpen : ""}`}
@@ -1090,6 +1338,17 @@ export default function Home() {
                 </select>
               </label>
 
+              <label className={styles.fieldInline}>
+                <span>No Parc</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={canceladasNumeroParcBusca}
+                  onChange={(event) => setCanceladasNumeroParcBusca(event.target.value)}
+                  placeholder="Busca exata"
+                />
+              </label>
+
               <button
                 type="button"
                 className={styles.secondaryBtn}
@@ -1113,8 +1372,9 @@ export default function Home() {
                 onClick={() => {
                   setCanceladasAnoSelecionado("");
                   setCanceladasMesSelecionado("");
+                  setCanceladasNumeroParcBusca("");
                   setCanceladasPage(1);
-                  void loadCanceladas({ ano: "", mes: "", page: 1 });
+                  void loadCanceladas({ ano: "", mes: "", numeroParc: "", page: 1 });
                 }}
                 disabled={canceladasLoading}
               >
@@ -1155,7 +1415,9 @@ export default function Home() {
 
           {!canceladasError && (
             <p className={styles.infoMsg}>
-              Total registrado: {canceladasTotal.toLocaleString("pt-BR")} registros.
+              Total registrado: {canceladasTotal.toLocaleString("pt-BR")} registros. Valor Emitido:
+              {" "}
+              {formatCurrency(canceladasTotalValorEmitido)}.
             </p>
           )}
 
@@ -1169,14 +1431,86 @@ export default function Home() {
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th>Competencia</th>
-                      <th>Codigo</th>
-                      <th>Nome</th>
-                      <th>Emissao</th>
-                      <th>Vencimento</th>
-                      <th>Valor Emitido</th>
-                      <th>No Parc</th>
-                      <th>No NF</th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("competencia")}
+                        >
+                          <span>Competencia</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "competencia")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("codigo")}
+                        >
+                          <span>Codigo</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "codigo")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("nome")}
+                        >
+                          <span>Nome</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "nome")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("emissao")}
+                        >
+                          <span>Emissao</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "emissao")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("vencimento")}
+                        >
+                          <span>Vencimento</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "vencimento")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("valorEmitido")}
+                        >
+                          <span>Valor Emitido</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "valorEmitido")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("numeroParc")}
+                        >
+                          <span>No Parc</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "numeroParc")}</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button
+                          type="button"
+                          className={styles.sortHeader}
+                          onClick={() => handleCanceladasSort("numeroNf")}
+                        >
+                          <span>No NF</span>
+                          <span>{sortIndicator(canceladasSortBy, canceladasSortDir, "numeroNf")}</span>
+                        </button>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

@@ -2,16 +2,17 @@ import JSZip from "jszip";
 import { CompetenciaDetector } from "@/features/eventos/services/CompetenciaDetector";
 import { competenciaToString, parseCompetencia } from "@/features/eventos/services/utils";
 import {
+  CanceladasProcessProgress,
   CanceladasProcessResult,
   CanceladasWorkbookProcessor,
 } from "@/features/contraprestacoes/services/CanceladasWorkbookProcessor";
 
-interface BrowserProcessInput {
+export interface BrowserProcessInput {
   competenciaRaw: string | null | undefined;
   file: File;
 }
 
-interface BrowserProcessOutput {
+export interface BrowserProcessOutput {
   fileName: string;
   fileBuffer: Uint8Array;
   competenciaDetectada: string | null;
@@ -48,8 +49,20 @@ async function resolveCompetencia(
 
 export async function processCanceladasInBrowser(
   input: BrowserProcessInput,
+  onProgress?: (progress: CanceladasProcessProgress) => void,
 ): Promise<BrowserProcessOutput> {
+  onProgress?.({
+    value: 6,
+    label: "Lendo arquivo",
+    detail: `Abrindo ${input.file.name} para iniciar o processamento mensal.`,
+  });
   const fileBuffer = new Uint8Array(await input.file.arrayBuffer());
+
+  onProgress?.({
+    value: 10,
+    label: "Resolvendo competencia",
+    detail: "Confirmando a competencia a partir do arquivo e do valor informado na tela.",
+  });
   const { competencia, detectada } = await resolveCompetencia(
     input.competenciaRaw,
     fileBuffer,
@@ -57,8 +70,13 @@ export async function processCanceladasInBrowser(
   );
 
   const processor = new CanceladasWorkbookProcessor();
-  const result = await processor.process(fileBuffer, competencia);
+  const result = await processor.process(fileBuffer, competencia, onProgress);
 
+  onProgress?.({
+    value: 96,
+    label: "Compactando pacote",
+    detail: "Empacotando os arquivos finais de Canceladas em um ZIP unico.",
+  });
   const zip = new JSZip();
   result.generatedFiles.forEach((fileItem) => {
     zip.file(fileItem.fileName, fileItem.buffer);

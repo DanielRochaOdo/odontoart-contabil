@@ -1,12 +1,8 @@
 import JSZip from "jszip";
 import { NextResponse } from "next/server";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
-import {
-  CanceladasWorkbookProcessor,
-  ImportedCanceladaRow,
-} from "@/features/contraprestacoes/services/CanceladasWorkbookProcessor";
+import { CanceladasWorkbookProcessor } from "@/features/contraprestacoes/services/CanceladasWorkbookProcessor";
 import { parseCompetencia } from "@/features/eventos/services/utils";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -28,86 +24,15 @@ function toFriendlyMessage(error: unknown): string {
   return "Nao foi possivel concluir o processamento mensal de Canceladas agora.";
 }
 
-async function replaceRows(
-  rowsToImport: ImportedCanceladaRow[],
-  competencia: string,
-) {
-  const supabase = getSupabaseServerClient();
-  if (!supabase) {
-    return NextResponse.json(
-      {
-        message:
-          "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para processar Canceladas.",
-      },
-      { status: 500 },
-    );
-  }
-
-  const { error: deleteError } = await supabase
-    .from("contraprestacoes_canceladas_registros")
-    .delete()
-    .eq("competencia", competencia)
-    .eq("origem", "PROCESSAMENTO_MENSAL");
-
-  if (deleteError) {
-    throw deleteError;
-  }
-
-  const chunkSize = 1000;
-  for (let start = 0; start < rowsToImport.length; start += chunkSize) {
-    const chunk = rowsToImport.slice(start, start + chunkSize);
-    if (chunk.length === 0) continue;
-
-    const { error: insertError } = await supabase
-      .from("contraprestacoes_canceladas_registros")
-      .insert(chunk);
-
-    if (insertError) {
-      throw insertError;
-    }
-  }
-
-  return null;
-}
-
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
 
     if (contentType.includes("application/json")) {
-      const payload = (await request.json()) as {
-        competencia?: string;
-        rowsToImport?: ImportedCanceladaRow[];
-      };
-
-      const competencia = typeof payload.competencia === "string" ? payload.competencia : "";
-      const rowsToImport = Array.isArray(payload.rowsToImport) ? payload.rowsToImport : [];
-
-      if (!/^\d{4}-\d{2}$/.test(competencia)) {
-        return NextResponse.json(
-          { message: "Competencia invalida para persistir Canceladas." },
-          { status: 400 },
-        );
-      }
-
-      const persistError = await replaceRows(rowsToImport, competencia);
-      if (persistError) return persistError;
-
       return NextResponse.json({
-        competencia,
-        registrosImportados: rowsToImport.length,
-      });
-    }
-
-    const supabase = getSupabaseServerClient();
-    if (!supabase) {
-      return NextResponse.json(
-        {
-          message:
-            "Configure SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY validos para processar Canceladas.",
-        },
-        { status: 500 },
-      );
+        message:
+          "O processamento mensal de Canceladas nao alimenta mais a base historica. Use apenas a importacao de base historica nesse modulo.",
+      }, { status: 410 });
     }
 
     const formData = await request.formData();
@@ -134,8 +59,6 @@ export async function POST(request: Request) {
       typeof competenciaRaw === "string" ? competenciaRaw : undefined,
     );
     const result = await processor.process(fileBuffer, competencia);
-    const persistError = await replaceRows(result.rowsToImport, result.competencia);
-    if (persistError) return persistError;
 
     const zip = new JSZip();
     result.generatedFiles.forEach((fileItem) => {
@@ -151,7 +74,7 @@ export async function POST(request: Request) {
         registrosTratados: result.registrosTratados,
         registrosPf: result.registrosPf,
         registrosPj: result.registrosPj,
-        registrosImportados: result.rowsToImport.length,
+        registrosImportados: 0,
         arquivosGerados: result.generatedFiles.length,
       }),
       "utf8",

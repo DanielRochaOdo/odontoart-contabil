@@ -415,6 +415,67 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.progressCard {
+  min-width: min(100%, 360px);
+  flex: 1 1 320px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, hsl(215 30% 13% / 0.92), hsl(217 32% 10% / 0.96));
+  padding: 10px 12px;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.progressHeader strong {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.progressHeader span {
+  color: var(--brand-green);
+  font-size: 0.78rem;
+  line-height: 1.33;
+  font-variant-numeric: tabular-nums;
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid hsl(190 44% 26%);
+  background:
+    linear-gradient(90deg, hsl(214 35% 12%), hsl(215 32% 16%));
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, hsl(169 73% 42%), hsl(191 94% 53%), hsl(169 73% 42%));
+  background-size: 200% 100%;
+  animation: progressShift 1.4s linear infinite;
+  transition: width 0.28s ease;
+}
+
+.progressDetail {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .reportControls {
@@ -670,6 +731,25 @@
   font-weight: 500;
 }
 
+.sortHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sortHeader:hover {
+  color: var(--brand-link);
+}
+
 .table td {
   color: var(--text-secondary);
   font-weight: 400;
@@ -738,6 +818,16 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes progressShift {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: 0 0;
   }
 }
 
