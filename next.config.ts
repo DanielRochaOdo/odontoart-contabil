@@ -7,6 +7,7 @@ const allowedDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? "")
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: allowedDevOrigins.length > 0 ? allowedDevOrigins : undefined,
+  serverExternalPackages: ["exceljs", "jszip"],
   turbopack: {
     root: process.cwd(),
   },
