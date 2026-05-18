@@ -185,6 +185,30 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   ) as ArrayBuffer;
 }
 
+async function detectCompetenciaLocally(
+  file: File,
+): Promise<{ competencia: string | null; message?: string }> {
+  const [{ CompetenciaDetector }, { competenciaToString }] = await Promise.all([
+    import("@/features/eventos/services/CompetenciaDetector"),
+    import("@/features/eventos/services/utils"),
+  ]);
+
+  const detector = new CompetenciaDetector();
+  const detected = await detector.detect(new Uint8Array(await file.arrayBuffer()), file.name);
+
+  if (!detected) {
+    return {
+      competencia: null,
+      message:
+        "Nao foi possivel identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+    };
+  }
+
+  return {
+    competencia: competenciaToString(detected),
+  };
+}
+
 export default function Home() {
   const [activeModule, setActiveModule] = useState<Module>("eventos");
   const [activeContraprestacoesModule, setActiveContraprestacoesModule] =
@@ -254,18 +278,8 @@ export default function Home() {
     detectRequestRef.current += 1;
     const requestId = detectRequestRef.current;
 
-    const formData = new FormData();
-    formData.append("arquivo", file);
-
     try {
-      const response = await fetch("/api/eventos/competencia", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = (await response.json()) as {
-        competencia?: string | null;
-        message?: string;
-      };
+      const payload = await detectCompetenciaLocally(file);
 
       if (requestId !== detectRequestRef.current) return;
 
@@ -307,22 +321,15 @@ export default function Home() {
 
     void (async () => {
       try {
-        const [{ CompetenciaDetector }, { parseCompetencia }] = await Promise.all([
-          import("@/features/eventos/services/CompetenciaDetector"),
+        const [{ parseCompetencia }] = await Promise.all([
           import("@/features/eventos/services/utils"),
         ]);
+        const detected = await detectCompetenciaLocally(file);
 
-        const detector = new CompetenciaDetector();
-        const detected = await detector.detect(
-          new Uint8Array(await file.arrayBuffer()),
-          file.name,
-        );
-
-        if (detected) {
-          const detectedValue = `${detected.ano}-${String(detected.mes).padStart(2, "0")}`;
-          setCompetencia(detectedValue);
+        if (detected.competencia) {
+          setCompetencia(detected.competencia);
           setContrapCompetenciaHint(
-            `Competencia identificada localmente em Base Recebidas: ${detectedValue}.`,
+            `Competencia identificada localmente em Base Recebidas: ${detected.competencia}.`,
           );
           return;
         }
@@ -331,7 +338,8 @@ export default function Home() {
         const fallbackValue = `${fallback.ano}-${String(fallback.mes).padStart(2, "0")}`;
         setCompetencia(fallbackValue);
         setContrapCompetenciaHint(
-          "Nao conseguimos identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+          detected.message ??
+            "Nao conseguimos identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
         );
       } catch {
         setContrapCompetenciaHint(
@@ -611,13 +619,30 @@ export default function Home() {
     setCanceladasProcessSummary(null);
 
     try {
-      const formData = new FormData();
-      formData.append("arquivo", canceladasProcessFile);
-      formData.append("competencia", competencia);
+      const { processCanceladasInBrowser } = await import(
+        "@/features/contraprestacoes/services/CanceladasBrowserProcessor"
+      );
+      const result = await processCanceladasInBrowser({
+        competenciaRaw: competencia,
+        file: canceladasProcessFile,
+      });
+
+      if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
+        setCompetencia(result.competenciaDetectada);
+        setCanceladasCompetenciaHint(
+          `Competencia confirmada localmente em Canceladas: ${result.competenciaDetectada}.`,
+        );
+      }
 
       const response = await fetch("/api/contraprestacoes/canceladas/processar", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          competencia: result.result.competencia,
+          rowsToImport: result.result.rowsToImport,
+        }),
       });
 
       if (!response.ok) {
@@ -627,19 +652,20 @@ export default function Home() {
         );
       }
 
-      const summaryHeader = response.headers.get("x-odonto-canceladas-summary");
-      if (summaryHeader) {
-        const decoded = atob(summaryHeader);
-        setCanceladasProcessSummary(JSON.parse(decoded) as CanceladasProcessSummary);
-      }
+      setCanceladasProcessSummary({
+        competencia: result.result.competencia,
+        registrosEntrada: result.result.registrosEntrada,
+        registrosTratados: result.result.registrosTratados,
+        registrosPf: result.result.registrosPf,
+        registrosPj: result.result.registrosPj,
+        registrosImportados: result.result.rowsToImport.length,
+        arquivosGerados: result.result.generatedFiles.length,
+      });
 
-      const blob = await response.blob();
-      const fileName =
-        response.headers
-          .get("Content-Disposition")
-          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Canceladas.zip";
-
-      downloadBlob(blob, fileName);
+      downloadBlob(
+        new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/zip" }),
+        result.fileName,
+      );
       setCanceladasSuccess(
         "Processamento mensal concluido. O pacote com a base tratada e a planilha final foi baixado e a base historica interna foi atualizada.",
       );

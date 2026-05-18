@@ -23,7 +23,7 @@ interface CanceladaSourceRow {
   dtEmissao: Date | null;
 }
 
-interface ImportedCanceladaRow {
+export interface ImportedCanceladaRow {
   competencia: string;
   ano: number;
   mes: number;
