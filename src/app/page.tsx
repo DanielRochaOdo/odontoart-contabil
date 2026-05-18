@@ -20,13 +20,11 @@ import {
   ChevronRight,
   CircleHelp,
   Download,
-  Edit3,
   FileSpreadsheet,
   FolderOpen,
   Layers3,
   LoaderCircle,
   RefreshCcw,
-  Trash2,
   X,
 } from "lucide-react";
 import styles from "./page.module.css";
@@ -104,15 +102,14 @@ interface CanceladaRow {
   criadoEm: string;
 }
 
-interface CanceladasManualForm {
+interface CanceladasProcessSummary {
   competencia: string;
-  codigo: string;
-  nome: string;
-  emissao: string;
-  vencimento: string;
-  valorEmitido: string;
-  numeroParc: string;
-  numeroNf: string;
+  registrosEntrada: number;
+  registrosTratados: number;
+  registrosPf: number;
+  registrosPj: number;
+  registrosImportados: number;
+  arquivosGerados: number;
 }
 
 type SubmitState = "idle" | "loading" | "success" | "error";
@@ -188,32 +185,6 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   ) as ArrayBuffer;
 }
 
-function buildEmptyCanceladasForm(competencia: string): CanceladasManualForm {
-  return {
-    competencia,
-    codigo: "",
-    nome: "",
-    emissao: "",
-    vencimento: "",
-    valorEmitido: "",
-    numeroParc: "",
-    numeroNf: "",
-  };
-}
-
-function mapCanceladaRowToForm(row: CanceladaRow): CanceladasManualForm {
-  return {
-    competencia: row.competencia,
-    codigo: row.codigo,
-    nome: row.nome,
-    emissao: row.emissao ?? "",
-    vencimento: row.vencimento ?? "",
-    valorEmitido: row.valorEmitido ? String(row.valorEmitido) : "",
-    numeroParc: row.numeroParc,
-    numeroNf: row.numeroNf,
-  };
-}
-
 export default function Home() {
   const [activeModule, setActiveModule] = useState<Module>("eventos");
   const [activeContraprestacoesModule, setActiveContraprestacoesModule] =
@@ -247,6 +218,8 @@ export default function Home() {
   const [canceladasError, setCanceladasError] = useState("");
   const [canceladasSuccess, setCanceladasSuccess] = useState("");
   const [canceladasImportFile, setCanceladasImportFile] = useState<File | null>(null);
+  const [canceladasProcessFile, setCanceladasProcessFile] = useState<File | null>(null);
+  const [canceladasCompetenciaHint, setCanceladasCompetenciaHint] = useState("");
   const [canceladasAnosDisponiveis, setCanceladasAnosDisponiveis] = useState<number[]>([]);
   const [canceladasMesesDisponiveis, setCanceladasMesesDisponiveis] = useState<number[]>([]);
   const [canceladasAnoSelecionado, setCanceladasAnoSelecionado] = useState("");
@@ -256,13 +229,11 @@ export default function Home() {
   const [canceladasTotal, setCanceladasTotal] = useState(0);
   const [canceladasTotalPaginas, setCanceladasTotalPaginas] = useState(0);
   const [canceladasImportOpen, setCanceladasImportOpen] = useState(false);
-  const [canceladasManualOpen, setCanceladasManualOpen] = useState(false);
+  const [canceladasProcessOpen, setCanceladasProcessOpen] = useState(true);
   const [canceladasFiltersOpen, setCanceladasFiltersOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [canceladasEditingId, setCanceladasEditingId] = useState<number | null>(null);
-  const [canceladasManualForm, setCanceladasManualForm] = useState<CanceladasManualForm>(
-    () => buildEmptyCanceladasForm(currentMonth()),
-  );
+  const [canceladasProcessSummary, setCanceladasProcessSummary] =
+    useState<CanceladasProcessSummary | null>(null);
 
   const canSubmit = useMemo(
     () => Boolean(knownFile && liquidFile && competencia) && status !== "loading",
@@ -368,6 +339,16 @@ export default function Home() {
         );
       }
     })();
+  }
+
+  function handleCanceladasProcessChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setCanceladasProcessFile(file);
+    if (!file) {
+      setCanceladasCompetenciaHint("");
+      return;
+    }
+    void detectCompetenciaFromFile(file, "Canceladas", setCanceladasCompetenciaHint);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -578,6 +559,7 @@ export default function Home() {
     setCanceladasLoading(true);
     setCanceladasError("");
     setCanceladasSuccess("");
+    setCanceladasProcessSummary(null);
 
     try {
       const formData = new FormData();
@@ -619,109 +601,56 @@ export default function Home() {
     }
   }
 
-  async function handleCanceladasManualSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleCanceladasProcessSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canceladasProcessFile) return;
+
     setCanceladasLoading(true);
     setCanceladasError("");
     setCanceladasSuccess("");
+    setCanceladasProcessSummary(null);
 
     try {
-      const isEditing = canceladasEditingId !== null;
-      const response = await fetch(
-        isEditing
-          ? `/api/contraprestacoes/canceladas/registros/${canceladasEditingId}`
-          : "/api/contraprestacoes/canceladas/registros",
-        {
-          method: isEditing ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            competencia: canceladasManualForm.competencia,
-            codigo: canceladasManualForm.codigo,
-            nome: canceladasManualForm.nome,
-            emissao: canceladasManualForm.emissao || null,
-            vencimento: canceladasManualForm.vencimento || null,
-            valorEmitido: canceladasManualForm.valorEmitido
-              ? Number(canceladasManualForm.valorEmitido)
-              : 0,
-            numeroParc: canceladasManualForm.numeroParc,
-            numeroNf: canceladasManualForm.numeroNf,
-          }),
-        },
-      );
+      const formData = new FormData();
+      formData.append("arquivo", canceladasProcessFile);
+      formData.append("competencia", competencia);
 
-      const payload = (await response.json()) as { message?: string };
+      const response = await fetch("/api/contraprestacoes/canceladas/processar", {
+        method: "POST",
+        body: formData,
+      });
+
       if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
         throw new Error(
-          payload.message ??
-            (isEditing
-              ? "Nao foi possivel atualizar o registro."
-              : "Nao foi possivel incluir registro manual."),
+          payload?.message ?? "Nao foi possivel processar a base mensal de Canceladas.",
         );
       }
 
+      const summaryHeader = response.headers.get("x-odonto-canceladas-summary");
+      if (summaryHeader) {
+        const decoded = atob(summaryHeader);
+        setCanceladasProcessSummary(JSON.parse(decoded) as CanceladasProcessSummary);
+      }
+
+      const blob = await response.blob();
+      const fileName =
+        response.headers
+          .get("Content-Disposition")
+          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Canceladas.zip";
+
+      downloadBlob(blob, fileName);
       setCanceladasSuccess(
-        isEditing ? "Registro atualizado com sucesso." : "Registro manual inserido com sucesso.",
+        "Processamento mensal concluido. O pacote com a base tratada e a planilha final foi baixado e a base historica interna foi atualizada.",
       );
-      setCanceladasEditingId(null);
-      setCanceladasManualForm(buildEmptyCanceladasForm(canceladasManualForm.competencia));
+      setCanceladasProcessFile(null);
       setCanceladasPage(1);
       await loadCanceladas({ page: 1 });
     } catch (error) {
       setCanceladasError(
         error instanceof Error
           ? error.message
-          : canceladasEditingId !== null
-            ? "Nao foi possivel atualizar o registro."
-            : "Nao foi possivel incluir registro manual.",
-      );
-    } finally {
-      setCanceladasLoading(false);
-    }
-  }
-
-  function handleCanceladasEdit(row: CanceladaRow) {
-    setCanceladasEditingId(row.id);
-    setCanceladasManualForm(mapCanceladaRowToForm(row));
-    setCanceladasManualOpen(true);
-    setCanceladasError("");
-    setCanceladasSuccess("");
-  }
-
-  function resetCanceladasManualForm() {
-    const competenciaBase = canceladasManualForm.competencia || currentMonth();
-    setCanceladasEditingId(null);
-    setCanceladasManualForm(buildEmptyCanceladasForm(competenciaBase));
-  }
-
-  async function handleCanceladasDelete(row: CanceladaRow) {
-    const confirmed = window.confirm(
-      `Excluir o registro ${row.codigo} - ${row.nome} da competencia ${row.competencia}?`,
-    );
-    if (!confirmed) return;
-
-    setCanceladasLoading(true);
-    setCanceladasError("");
-    setCanceladasSuccess("");
-
-    try {
-      const response = await fetch(`/api/contraprestacoes/canceladas/registros/${row.id}`, {
-        method: "DELETE",
-      });
-
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      if (!response.ok) {
-        throw new Error(payload?.message ?? "Nao foi possivel excluir o registro.");
-      }
-
-      if (canceladasEditingId === row.id) {
-        resetCanceladasManualForm();
-      }
-
-      setCanceladasSuccess("Registro excluido com sucesso.");
-      await loadCanceladas();
-    } catch (error) {
-      setCanceladasError(
-        error instanceof Error ? error.message : "Nao foi possivel excluir o registro.",
+          : "Nao foi possivel processar a base mensal de Canceladas.",
       );
     } finally {
       setCanceladasLoading(false);
@@ -975,8 +904,8 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Contraprestacoes Canceladas</h1>
           <p>
-            Modulo dedicado para carga historica unica do consolidado de Canceladas e manutencao
-            mensal da base tratada com complementos manuais.
+            Modulo dedicado para carga historica do consolidado de Canceladas e processamento
+            mensal da base operacional com atualizacao automatica da base historica interna.
           </p>
         </header>
 
@@ -986,7 +915,7 @@ export default function Home() {
             className={styles.collapseTrigger}
             onClick={() => setCanceladasImportOpen((value) => !value)}
           >
-            <span>Importacao de Base (XLSX)</span>
+            <span>Importacao de Base Historica (XLSX)</span>
             <ChevronDown
               size={14}
               className={`${styles.menuCaret} ${canceladasImportOpen ? styles.menuCaretOpen : ""}`}
@@ -1031,153 +960,57 @@ export default function Home() {
           <button
             type="button"
             className={styles.collapseTrigger}
-            onClick={() => setCanceladasManualOpen((value) => !value)}
+            onClick={() => setCanceladasProcessOpen((value) => !value)}
           >
-            <span>{canceladasEditingId !== null ? "Edicao Manual" : "Inclusao Manual"}</span>
+            <span>Processamento Mensal da Base (XLSX)</span>
             <ChevronDown
               size={14}
-              className={`${styles.menuCaret} ${canceladasManualOpen ? styles.menuCaretOpen : ""}`}
+              className={`${styles.menuCaret} ${canceladasProcessOpen ? styles.menuCaretOpen : ""}`}
             />
           </button>
 
-          {canceladasManualOpen && (
-            <form onSubmit={handleCanceladasManualSubmit} className={`${styles.form} ${styles.collapseContent}`}>
+          {canceladasProcessOpen && (
+            <form onSubmit={handleCanceladasProcessSubmit} className={`${styles.form} ${styles.collapseContent}`}>
               <div className={styles.grid}>
                 <label className={styles.field}>
                   <span>Competencia</span>
                   <input
                     type="month"
-                    value={canceladasManualForm.competencia}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        competencia: event.target.value,
-                      }))
-                    }
+                    value={competencia ?? ""}
+                    onChange={(event) => setCompetencia(event.target.value)}
                     required
                   />
+                  {canceladasCompetenciaHint && (
+                    <small className={styles.helper}>{canceladasCompetenciaHint}</small>
+                  )}
                 </label>
 
                 <label className={styles.field}>
-                  <span>Codigo</span>
+                  <span>Base Canceladas mensal (.xlsx)</span>
                   <input
-                    type="text"
-                    value={canceladasManualForm.codigo}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        codigo: event.target.value,
-                      }))
-                    }
-                    required
+                    type="file"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    onChange={handleCanceladasProcessChange}
                   />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Nome</span>
-                  <input
-                    type="text"
-                    value={canceladasManualForm.nome}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        nome: event.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Emissao</span>
-                  <input
-                    type="date"
-                    value={canceladasManualForm.emissao}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        emissao: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Vencimento</span>
-                  <input
-                    type="date"
-                    value={canceladasManualForm.vencimento}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        vencimento: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Valor Emitido</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={canceladasManualForm.valorEmitido}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        valorEmitido: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>No Parc</span>
-                  <input
-                    type="text"
-                    value={canceladasManualForm.numeroParc}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        numeroParc: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>No NF</span>
-                  <input
-                    type="text"
-                    value={canceladasManualForm.numeroNf}
-                    onChange={(event) =>
-                      setCanceladasManualForm((current) => ({
-                        ...current,
-                        numeroNf: event.target.value,
-                      }))
-                    }
-                  />
+                  <small className={styles.helper}>
+                    Exemplo: BASE CANCELADAS 03.2026 com a aba `original`. O pacote gerado inclui
+                    a base tratada e o arquivo final `Mensalidades Canceladas`.
+                  </small>
                 </label>
               </div>
 
               <div className={styles.actions}>
-                <button type="submit" className={styles.primaryBtn} disabled={canceladasLoading}>
+                <button
+                  type="submit"
+                  className={styles.primaryBtn}
+                  disabled={!canceladasProcessFile || canceladasLoading}
+                >
                   {canceladasLoading ? (
                     <LoaderCircle size={15} className={styles.spin} />
                   ) : (
-                    <CheckCircle2 size={15} />
+                    <Download size={15} />
                   )}
-                  <span>
-                    {canceladasEditingId !== null ? "Salvar Alteracoes" : "Adicionar Registro Manual"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryBtn}
-                  onClick={resetCanceladasManualForm}
-                  disabled={canceladasLoading}
-                >
-                  <span>Limpar Formulario</span>
+                  <span>Processar Base Mensal</span>
                 </button>
               </div>
             </form>
@@ -1280,6 +1113,20 @@ export default function Home() {
             </p>
           )}
 
+          {canceladasProcessSummary && (
+            <div className={styles.summary}>
+              <h2>Resumo da Competencia {canceladasProcessSummary.competencia}</h2>
+              <ul>
+                <li>Registros na base original: {canceladasProcessSummary.registrosEntrada}</li>
+                <li>Registros apos tratativa: {canceladasProcessSummary.registrosTratados}</li>
+                <li>Registros PF: {canceladasProcessSummary.registrosPf}</li>
+                <li>Registros PJ: {canceladasProcessSummary.registrosPj}</li>
+                <li>Registros enviados para a base historica: {canceladasProcessSummary.registrosImportados}</li>
+                <li>Arquivos gerados no pacote: {canceladasProcessSummary.arquivosGerados}</li>
+              </ul>
+            </div>
+          )}
+
           {!canceladasError && (
             <p className={styles.infoMsg}>
               Total registrado: {canceladasTotal.toLocaleString("pt-BR")} registros.
@@ -1304,7 +1151,6 @@ export default function Home() {
                       <th>Valor Emitido</th>
                       <th>No Parc</th>
                       <th>No NF</th>
-                      <th>Acoes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1318,28 +1164,6 @@ export default function Home() {
                         <td>{formatCurrency(row.valorEmitido)}</td>
                         <td>{row.numeroParc || "-"}</td>
                         <td>{row.numeroNf || "-"}</td>
-                        <td>
-                          <div className={styles.inlineActions}>
-                            <button
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() => handleCanceladasEdit(row)}
-                              aria-label={`Editar registro ${row.codigo}`}
-                              title="Editar"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() => void handleCanceladasDelete(row)}
-                              aria-label={`Excluir registro ${row.codigo}`}
-                              title="Excluir"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1600,8 +1424,8 @@ export default function Home() {
             <h3>2. Contraprestacoes Canceladas</h3>
             <p>Fluxo recomendado:</p>
             <ul>
-              <li>Abra Importacao de Base e envie o arquivo consolidado em .xlsx.</li>
-              <li>Use Inclusao Manual para ajustes pontuais de registros.</li>
+              <li>Use Importacao de Base Historica para alimentar ou complementar a base historica por arquivo.</li>
+              <li>Use Processamento Mensal para tratar a base operacional e gerar o arquivo final PF/PJ.</li>
               <li>Aplique filtros de Ano e Mes para consulta.</li>
               <li>Navegue pelos resultados com paginação de 100 registros por pagina.</li>
             </ul>
@@ -1623,7 +1447,7 @@ export default function Home() {
               <li>Confirme a competencia antes de processar.</li>
               <li>Use arquivos em formato .xlsx.</li>
               <li>Após importacoes, valide total de registros e paginas no modulo Canceladas.</li>
-              <li>Em caso de divergencia, ajuste via Inclusao Manual e recarregue os filtros.</li>
+              <li>Em caso de divergencia historica, importe um arquivo complementar e recarregue os filtros.</li>
             </ul>
           </div>
         </section>

@@ -28,11 +28,11 @@ function hasContent(value: string): boolean {
 }
 
 function isPmFortaleza(value: string): boolean {
-  return normalizeText(value) === "PREFEITURA MUNICIPAL DE FORTALEZA";
+  return normalizeText(value).includes("PREFEITURA MUNICIPAL DE FORTALEZA");
 }
 
 function isGovernoEstado(value: string): boolean {
-  return normalizeText(value) === "GOVERNO DO ESTADO";
+  return normalizeText(value).includes("GOVERNO DO ESTADO");
 }
 
 function isParticular(value: string): boolean {
@@ -86,6 +86,8 @@ export function applyRecebidasRules(
   for (const sourceRow of sourceRows) {
     const row = cloneRow(sourceRow);
     const observations: string[] = [];
+    const loteOriginalVazio = isEmpty(row.loteNf);
+    const nfOriginalVazio = isEmpty(row.nf);
 
     if (shouldDropByEmissionDate(row, competenciaLastDay)) continue;
 
@@ -122,14 +124,9 @@ export function applyRecebidasRules(
       observations.push("Tipo recebimento normalizado para DINHEIRO");
     }
 
-    if (isEmpty(row.loteNf)) {
-      row.loteNf = "DEVOLUCAO";
-      observations.push("Lote vazio convertido para DEVOLUCAO");
-    }
-
     if (isGrupoOdontoart(row.grupoEmpresa)) {
       row.tipoRecebimento = "BANCO DO BRASIL CLINICO EMPRESA";
-      if (isEmpty(row.loteNf) && isEmpty(row.nf)) {
+      if (loteOriginalVazio && nfOriginalVazio) {
         fillLoteAndNfFromParcela(row, observations);
       }
       observations.push("Grupo empresa tratado como BANCO DO BRASIL CLINICO EMPRESA");
@@ -143,6 +140,11 @@ export function applyRecebidasRules(
     if (isGovernoEstado(row.tipoPagamento)) {
       row.tipoRecebimento = "BRADESCO";
       observations.push("Tipo pagamento GOVERNO DO ESTADO mapeado para BRADESCO");
+    }
+
+    if (isEmpty(row.loteNf)) {
+      row.loteNf = "DEVOLUCAO";
+      observations.push("Lote vazio convertido para DEVOLUCAO");
     }
 
     const parcelaKey = exactText(row.parcela);
