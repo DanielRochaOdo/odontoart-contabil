@@ -588,6 +588,11 @@
   line-height: 1.5;
 }
 
+.summaryWarning {
+  color: hsl(30 95% 62%);
+  font-weight: 600;
+}
+
 .warnings {
   margin-top: 14px;
   border-top: 1px solid var(--border-default);

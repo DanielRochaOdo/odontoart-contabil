@@ -109,6 +109,7 @@ interface CanceladasProcessSummary {
   registrosPf: number;
   registrosPj: number;
   registrosImportados: number;
+  registrosDuplicadosNoParc: number;
   arquivosGerados: number;
 }
 
@@ -293,7 +294,6 @@ export default function Home() {
   const [canceladasLoading, setCanceladasLoading] = useState(false);
   const [canceladasError, setCanceladasError] = useState("");
   const [canceladasSuccess, setCanceladasSuccess] = useState("");
-  const [canceladasImportFile, setCanceladasImportFile] = useState<File | null>(null);
   const [canceladasProcessFile, setCanceladasProcessFile] = useState<File | null>(null);
   const [canceladasCompetenciaHint, setCanceladasCompetenciaHint] = useState("");
   const [canceladasAnosDisponiveis, setCanceladasAnosDisponiveis] = useState<number[]>([]);
@@ -308,7 +308,6 @@ export default function Home() {
   const [canceladasNumeroParcBusca, setCanceladasNumeroParcBusca] = useState("");
   const [canceladasSortBy, setCanceladasSortBy] = useState<CanceladasSortField>("vencimento");
   const [canceladasSortDir, setCanceladasSortDir] = useState<CanceladasSortDirection>("desc");
-  const [canceladasImportOpen, setCanceladasImportOpen] = useState(false);
   const [canceladasProcessOpen, setCanceladasProcessOpen] = useState(true);
   const [canceladasFiltersOpen, setCanceladasFiltersOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -316,8 +315,6 @@ export default function Home() {
     useState<CanceladasProcessSummary | null>(null);
   const [eventosProgress, setEventosProgress] = useState<ActionProgress>(createIdleProgress);
   const [contrapProgress, setContrapProgress] = useState<ActionProgress>(createIdleProgress);
-  const [canceladasImportProgress, setCanceladasImportProgress] =
-    useState<ActionProgress>(createIdleProgress);
   const [canceladasProcessProgress, setCanceladasProcessProgress] =
     useState<ActionProgress>(createIdleProgress);
 
@@ -724,87 +721,6 @@ export default function Home() {
     ],
   );
 
-  async function handleCanceladasImportSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canceladasImportFile) return;
-
-    setCanceladasLoading(true);
-    setCanceladasImportProgress({
-      active: true,
-      value: 10,
-      label: "Preparando importacao",
-      detail: `Lendo ${canceladasImportFile.name} para carregar a base historica de Canceladas.`,
-    });
-    setCanceladasError("");
-    setCanceladasSuccess("");
-    setCanceladasProcessSummary(null);
-    await flushProgressFrame();
-
-    try {
-      const formData = new FormData();
-      formData.append("arquivo", canceladasImportFile);
-
-      setCanceladasImportProgress({
-        active: true,
-        value: 32,
-        label: "Enviando arquivo",
-        detail: "Transmitindo a base consolidada para importacao no servidor.",
-      });
-      await flushProgressFrame();
-
-      const response = await fetch("/api/contraprestacoes/canceladas/importar", {
-        method: "POST",
-        body: formData,
-      });
-
-      const payload = (await response.json()) as {
-        inserted?: number;
-        competencias?: string[];
-        message?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Nao foi possivel importar a base de Canceladas.");
-      }
-
-      setCanceladasImportProgress({
-        active: true,
-        value: 76,
-        label: "Atualizando base interna",
-        detail: "Importacao concluida. Atualizando a listagem historica visivel na tela.",
-      });
-      await flushProgressFrame();
-
-      const competenciasTexto =
-        payload.competencias && payload.competencias.length > 0
-          ? ` Competencias: ${payload.competencias.join(", ")}.`
-          : "";
-      setCanceladasSuccess(
-        `Importacao concluida com ${payload.inserted ?? 0} registros.${competenciasTexto}`,
-      );
-      setCanceladasImportFile(null);
-      setCanceladasPage(1);
-      await loadCanceladas({ page: 1 });
-      setCanceladasImportProgress({
-        active: true,
-        value: 100,
-        label: "Concluido",
-        detail: "Base historica de Canceladas importada e listagem atualizada.",
-      });
-    } catch (error) {
-      setCanceladasImportProgress(createIdleProgress());
-      setCanceladasError(
-        error instanceof Error
-          ? error.message
-          : "Nao foi possivel importar a base de Canceladas.",
-      );
-    } finally {
-      setCanceladasLoading(false);
-    }
-
-    window.setTimeout(() => setCanceladasImportProgress(createIdleProgress()), 1800);
-  }
-
   async function handleCanceladasProcessSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canceladasProcessFile) return;
@@ -853,13 +769,47 @@ export default function Home() {
         );
       }
 
+      setCanceladasProcessProgress({
+        active: true,
+        value: 78,
+        label: "Atualizando historico",
+        detail: "Gravando o historico mensal sem duplicar registros por No Parc.",
+      });
+      await flushProgressFrame();
+
+      const persistResponse = await fetch("/api/contraprestacoes/canceladas/processar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          competencia: result.result.competencia,
+          rowsToImport: result.result.rowsToImport,
+        }),
+      });
+
+      const persistPayload = (await persistResponse.json().catch(() => null)) as
+        | { inserted?: number; skippedDuplicated?: number; message?: string }
+        | null;
+
+      if (!persistResponse.ok) {
+        throw new Error(
+          persistPayload?.message ??
+            "Nao foi possivel atualizar o historico mensal de Canceladas.",
+        );
+      }
+
+      const inserted = persistPayload?.inserted ?? 0;
+      const skippedDuplicated = persistPayload?.skippedDuplicated ?? 0;
+
       setCanceladasProcessSummary({
         competencia: result.result.competencia,
         registrosEntrada: result.result.registrosEntrada,
         registrosTratados: result.result.registrosTratados,
         registrosPf: result.result.registrosPf,
         registrosPj: result.result.registrosPj,
-        registrosImportados: 0,
+        registrosImportados: inserted,
+        registrosDuplicadosNoParc: skippedDuplicated,
         arquivosGerados: result.result.generatedFiles.length,
       });
 
@@ -876,9 +826,11 @@ export default function Home() {
         result.fileName,
       );
       setCanceladasSuccess(
-        "Processamento mensal concluido. O pacote com a base tratada e a planilha final foi baixado.",
+        `Processamento mensal concluido. ${inserted} registro(s) incluído(s) no historico e ${skippedDuplicated} duplicado(s) por No Parc ignorado(s).`,
       );
       setCanceladasProcessFile(null);
+      setCanceladasPage(1);
+      await loadCanceladas({ page: 1 });
       setCanceladasProcessProgress({
         active: true,
         value: 100,
@@ -1176,58 +1128,10 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Contraprestacoes Canceladas</h1>
           <p>
-            Modulo dedicado para carga historica do consolidado de Canceladas e processamento
-            mensal da base operacional com atualizacao automatica da base historica interna.
+            Modulo dedicado ao processamento mensal da base operacional, com atualizacao
+            automatica da base historica interna sem duplicidades por No Parc.
           </p>
         </header>
-
-        <section className={styles.card}>
-          <button
-            type="button"
-            className={styles.collapseTrigger}
-            onClick={() => setCanceladasImportOpen((value) => !value)}
-          >
-            <span>Importacao de Base Historica (XLSX)</span>
-            <ChevronDown
-              size={14}
-              className={`${styles.menuCaret} ${canceladasImportOpen ? styles.menuCaretOpen : ""}`}
-            />
-          </button>
-
-          {canceladasImportOpen && (
-            <form onSubmit={handleCanceladasImportSubmit} className={`${styles.form} ${styles.collapseContent}`}>
-              <div className={styles.grid}>
-                <label className={styles.field}>
-                  <span>Base consolidada (XLSX)</span>
-                  <input
-                    type="file"
-                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    onChange={(event) => setCanceladasImportFile(event.target.files?.[0] ?? null)}
-                  />
-                  <small className={styles.helper}>
-                    Exemplo: Rel total mensalidades canc 2020 a 2026.
-                  </small>
-                </label>
-              </div>
-
-              <div className={styles.actions}>
-                <button
-                  type="submit"
-                  className={styles.primaryBtn}
-                  disabled={!canceladasImportFile || canceladasLoading}
-                >
-                  {canceladasLoading ? (
-                    <LoaderCircle size={15} className={styles.spin} />
-                  ) : (
-                    <Download size={15} />
-                  )}
-                  <span>Importar XLSX</span>
-                </button>
-                {renderActionProgress(canceladasImportProgress)}
-              </div>
-            </form>
-          )}
-        </section>
 
         <section className={styles.card}>
           <button
@@ -1408,6 +1312,9 @@ export default function Home() {
                 <li>Registros PF: {canceladasProcessSummary.registrosPf}</li>
                 <li>Registros PJ: {canceladasProcessSummary.registrosPj}</li>
                 <li>Registros enviados para a base historica: {canceladasProcessSummary.registrosImportados}</li>
+                <li className={styles.summaryWarning}>
+                  Registros repetidos (No Parc) ignorados: {canceladasProcessSummary.registrosDuplicadosNoParc}
+                </li>
                 <li>Arquivos gerados no pacote: {canceladasProcessSummary.arquivosGerados}</li>
               </ul>
             </div>
@@ -1784,9 +1691,9 @@ export default function Home() {
             <h3>2. Contraprestacoes Canceladas</h3>
             <p>Fluxo recomendado:</p>
             <ul>
-              <li>Use Importacao de Base Historica para alimentar ou complementar a base historica por arquivo.</li>
-              <li>Use Processamento Mensal para tratar a base operacional e gerar o arquivo final PF/PJ.</li>
-              <li>Aplique filtros de Ano e Mes para consulta.</li>
+              <li>Use Processamento Mensal para tratar a base operacional, gerar o arquivo final PF/PJ e alimentar o historico.</li>
+              <li>O historico evita duplicidades com base no No Parc.</li>
+              <li>Aplique filtros de Ano e Mes por Vencimento para consulta.</li>
               <li>Navegue pelos resultados com paginação de 100 registros por pagina.</li>
             </ul>
 
@@ -1806,8 +1713,8 @@ export default function Home() {
             <ul>
               <li>Confirme a competencia antes de processar.</li>
               <li>Use arquivos em formato .xlsx.</li>
-              <li>Após importacoes, valide total de registros e paginas no modulo Canceladas.</li>
-              <li>Em caso de divergencia historica, importe um arquivo complementar e recarregue os filtros.</li>
+              <li>Após cada processamento mensal, valide total de registros e paginas no modulo Canceladas.</li>
+              <li>Use No Parc para auditoria de duplicidades no historico.</li>
             </ul>
           </div>
         </section>

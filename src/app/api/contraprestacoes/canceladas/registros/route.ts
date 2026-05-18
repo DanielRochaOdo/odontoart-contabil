@@ -194,7 +194,6 @@ async function fetchAllCanceladasImportacaoRows(): Promise<{
       .select(
         "id, competencia, ano, mes, cpt, codigo, nome, emissao, vencimento, valor_emitido, numero_parc, numero_nf, origem, criado_em",
       )
-      .eq("origem", "IMPORTACAO")
       .order("id", { ascending: false })
       .range(from, from + pageSize - 1);
 

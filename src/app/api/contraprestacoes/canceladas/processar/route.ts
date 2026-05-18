@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
 import { CanceladasWorkbookProcessor } from "@/features/contraprestacoes/services/CanceladasWorkbookProcessor";
 import { parseCompetencia } from "@/features/eventos/services/utils";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -24,15 +25,128 @@ function toFriendlyMessage(error: unknown): string {
   return "Nao foi possivel concluir o processamento mensal de Canceladas agora.";
 }
 
+interface PersistCanceladasPayload {
+  competencia?: string;
+  rowsToImport?: Array<{
+    competencia?: string;
+    ano?: number;
+    mes?: number;
+    cpt?: string;
+    codigo?: string;
+    nome?: string;
+    emissao?: string | null;
+    vencimento?: string | null;
+    valor_emitido?: number;
+    numero_parc?: string;
+    numero_nf?: string;
+    origem?: "PROCESSAMENTO_MENSAL";
+  }>;
+}
+
+function normalizeText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+async function fetchExistingParcelas(parcelas: string[]): Promise<Set<string>> {
+  const supabase = getSupabaseServerClient();
+  if (!supabase) {
+    throw new Error("Supabase indisponivel para gravacao de Canceladas.");
+  }
+
+  const existing = new Set<string>();
+  const chunkSize = 500;
+
+  for (let index = 0; index < parcelas.length; index += chunkSize) {
+    const chunk = parcelas.slice(index, index + chunkSize);
+    const { data, error } = await supabase
+      .from("contraprestacoes_canceladas_registros")
+      .select("numero_parc")
+      .in("numero_parc", chunk);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    ((data ?? []) as Array<{ numero_parc?: string | null }>).forEach((row) => {
+      const numeroParc = normalizeText(row.numero_parc);
+      if (numeroParc) existing.add(numeroParc);
+    });
+  }
+
+  return existing;
+}
+
+async function persistProcessedRows(payload: PersistCanceladasPayload): Promise<{
+  inserted: number;
+  skippedDuplicated: number;
+}> {
+  const supabase = getSupabaseServerClient();
+  if (!supabase) {
+    throw new Error("Supabase indisponivel para gravacao de Canceladas.");
+  }
+
+  const rows = Array.isArray(payload.rowsToImport) ? payload.rowsToImport : [];
+  if (rows.length === 0) {
+    return { inserted: 0, skippedDuplicated: 0 };
+  }
+
+  const seenInBatch = new Set<string>();
+  const normalizedRows = rows
+    .map((row) => ({
+      ...row,
+      numero_parc: normalizeText(row.numero_parc),
+      numero_nf: normalizeText(row.numero_nf),
+      codigo: normalizeText(row.codigo),
+      nome: normalizeText(row.nome),
+      cpt: normalizeText(row.cpt),
+    }))
+    .filter((row) => row.numero_parc.length > 0);
+
+  const numeroParcList = Array.from(new Set(normalizedRows.map((row) => row.numero_parc)));
+  const existing = await fetchExistingParcelas(numeroParcList);
+
+  const rowsToInsert = normalizedRows.filter((row) => {
+    if (existing.has(row.numero_parc)) return false;
+    if (seenInBatch.has(row.numero_parc)) return false;
+    seenInBatch.add(row.numero_parc);
+    return true;
+  });
+
+  if (rowsToInsert.length > 0) {
+    const { error } = await supabase
+      .from("contraprestacoes_canceladas_registros")
+      .insert(rowsToInsert);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  return {
+    inserted: rowsToInsert.length,
+    skippedDuplicated: normalizedRows.length - rowsToInsert.length,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
 
     if (contentType.includes("application/json")) {
+      const payload = (await request.json().catch(() => null)) as PersistCanceladasPayload | null;
+      if (!payload) {
+        return NextResponse.json(
+          { message: "Corpo da requisicao invalido para importacao do historico mensal." },
+          { status: 400 },
+        );
+      }
+
+      const result = await persistProcessedRows(payload);
       return NextResponse.json({
-        message:
-          "O processamento mensal de Canceladas nao alimenta mais a base historica. Use apenas a importacao de base historica nesse modulo.",
-      }, { status: 410 });
+        inserted: result.inserted,
+        skippedDuplicated: result.skippedDuplicated,
+      });
     }
 
     const formData = await request.formData();
