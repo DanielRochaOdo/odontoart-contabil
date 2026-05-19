@@ -78,7 +78,7 @@ const DATE_FORMAT = "dd/mm/yyyy";
 const CURRENCY_FORMAT = '"R$" #,##0.00';
 const HEADER_FONT = { name: "Calibri", size: 11, bold: true };
 const HEADER_SCAN_LIMIT = 10;
-const XLSX_LOAD_OPTIONS = {
+const XLSX_LOAD_OPTIONS: Partial<ExcelJS.XlsxReadOptions> = {
   ignoreNodes: [
     "sheetPr",
     "sheetViews",
@@ -99,7 +99,7 @@ const XLSX_LOAD_OPTIONS = {
     "conditionalFormatting",
     "extLst",
   ],
-} as const;
+};
 
 function competenciaToken(competencia: Competencia): string {
   return `${String(competencia.mes).padStart(2, "0")}.${competencia.ano}`;
