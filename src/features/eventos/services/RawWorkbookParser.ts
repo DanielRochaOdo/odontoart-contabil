@@ -9,6 +9,7 @@ import {
 } from "@/features/eventos/services/utils";
 
 type HeaderMap = Record<string, number>;
+const MAX_WORKSHEETS_TO_ANALYZE = 2;
 
 function normalizeHeader(value: string): string {
   return normalizeText(value).replace(/[^\w]/g, "");
@@ -48,7 +49,7 @@ function resolveWorksheet(workbook: ExcelJS.Workbook): {
     ["Valor Bruto (=)", "VL. BRUTO", "Valor Bruto"],
   ];
 
-  for (const worksheet of workbook.worksheets) {
+  for (const worksheet of workbook.worksheets.slice(0, MAX_WORKSHEETS_TO_ANALYZE)) {
     for (let row = 1; row <= Math.min(20, worksheet.rowCount); row += 1) {
       const headers = readHeaders(worksheet, row);
       const ok = requiredAliases.every((aliases) => findColumn(headers, aliases) > 0);

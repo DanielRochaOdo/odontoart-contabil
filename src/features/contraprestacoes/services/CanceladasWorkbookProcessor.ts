@@ -7,6 +7,7 @@ import {
   coerceNumber,
   coerceString,
   lastDayOfMonth,
+  normalizeText,
 } from "@/features/eventos/services/utils";
 
 interface CanceladaSourceRow {
@@ -21,6 +22,20 @@ interface CanceladaSourceRow {
   loteNf: string;
   nf: string;
   dtEmissao: Date | null;
+}
+
+interface SourceLayout {
+  headerRowNumber: number;
+  codigoCol: number;
+  nomeCol: number;
+  cpfCnpjCol: number;
+  dataVencimentoCol: number;
+  tituloCol: number;
+  dataPagamentoCol: number;
+  parcelaCol: number;
+  loteNfCol: number;
+  nfCol: number;
+  dtEmissaoCol: number;
 }
 
 export interface ImportedCanceladaRow {
@@ -62,19 +77,108 @@ export interface CanceladasProcessResult {
 const DATE_FORMAT = "dd/mm/yyyy";
 const CURRENCY_FORMAT = '"R$" #,##0.00';
 const HEADER_FONT = { name: "Calibri", size: 11, bold: true };
+const HEADER_SCAN_LIMIT = 10;
+const XLSX_LOAD_OPTIONS = {
+  ignoreNodes: [
+    "sheetPr",
+    "sheetViews",
+    "sheetFormatPr",
+    "autoFilter",
+    "mergeCells",
+    "rowBreaks",
+    "hyperlinks",
+    "pageMargins",
+    "dataValidations",
+    "pageSetup",
+    "headerFooter",
+    "printOptions",
+    "picture",
+    "drawing",
+    "sheetProtection",
+    "tableParts",
+    "conditionalFormatting",
+    "extLst",
+  ],
+} as const;
 
 function competenciaToken(competencia: Competencia): string {
   return `${String(competencia.mes).padStart(2, "0")}.${competencia.ano}`;
 }
 
 function normalizeSheetName(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toUpperCase();
+  return normalizeText(value).replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeHeader(value: string): string {
+  return normalizeText(value).replace(/[^\w]/g, "");
+}
+
+function readHeaderMap(worksheet: ExcelJS.Worksheet, rowNumber: number): Map<string, number> {
+  const headerMap = new Map<string, number>();
+  const row = worksheet.getRow(rowNumber);
+
+  for (let col = 1; col <= worksheet.columnCount; col += 1) {
+    const header = normalizeHeader(coerceString(row.getCell(col).value));
+    if (!header || headerMap.has(header)) continue;
+    headerMap.set(header, col);
+  }
+
+  return headerMap;
+}
+
+function findColumn(headerMap: Map<string, number>, aliases: string[]): number {
+  for (const alias of aliases) {
+    const col = headerMap.get(normalizeHeader(alias));
+    if (col) return col;
+  }
+  return -1;
+}
+
+function resolveSourceLayout(worksheet: ExcelJS.Worksheet): SourceLayout | null {
+  for (let rowNumber = 1; rowNumber <= Math.min(HEADER_SCAN_LIMIT, worksheet.rowCount); rowNumber += 1) {
+    const headerMap = readHeaderMap(worksheet, rowNumber);
+    const codigoCol = findColumn(headerMap, ["Codigo", "Código"]);
+    const nomeCol = findColumn(headerMap, ["Nome", "Nome Fantasia"]);
+    const cpfCnpjCol = findColumn(headerMap, ["CPF_CNPJ", "CPF/CNPJ", "CNPJ/CPF"]);
+    const dataVencimentoCol = findColumn(headerMap, ["Data Vencimento", "Vencimento"]);
+    const tituloCol = findColumn(headerMap, ["Titulo", "Título"]);
+    const dataPagamentoCol = findColumn(headerMap, ["Data Pagamento"]);
+    const parcelaCol = findColumn(headerMap, ["Parcela"]);
+    const loteNfCol = findColumn(headerMap, ["Lote NF"]);
+    const nfCol = findColumn(headerMap, ["NF"]);
+    const dtEmissaoCol = findColumn(headerMap, ["Dt Emissao", "Dt. Emissao", "Data Emissao"]);
+
+    const requiredColumns = [
+      codigoCol,
+      nomeCol,
+      cpfCnpjCol,
+      dataVencimentoCol,
+      tituloCol,
+      dataPagamentoCol,
+      parcelaCol,
+      loteNfCol,
+      nfCol,
+      dtEmissaoCol,
+    ];
+
+    if (requiredColumns.every((col) => col > 0)) {
+      return {
+        headerRowNumber: rowNumber,
+        codigoCol,
+        nomeCol,
+        cpfCnpjCol,
+        dataVencimentoCol,
+        tituloCol,
+        dataPagamentoCol,
+        parcelaCol,
+        loteNfCol,
+        nfCol,
+        dtEmissaoCol,
+      };
+    }
+  }
+
+  return null;
 }
 
 function toIsoDate(value: Date | null): string | null {
@@ -119,16 +223,19 @@ function copyColumnWidths(source: ExcelJS.Worksheet, target: ExcelJS.Worksheet):
 function createTreatedWorksheet(
   source: ExcelJS.Worksheet,
   target: ExcelJS.Worksheet,
+  headerRowNumber: number,
   lineNumbers: Set<number>,
 ): void {
   copyColumnWidths(source, target);
 
-  const headerValues = Array.from({ length: source.columnCount }, (_, index) =>
-    source.getRow(1).getCell(index + 1).value,
-  );
-  target.addRow(headerValues);
+  for (let rowNumber = 1; rowNumber <= headerRowNumber; rowNumber += 1) {
+    const values = Array.from({ length: source.columnCount }, (_, index) =>
+      source.getRow(rowNumber).getCell(index + 1).value,
+    );
+    target.addRow(values);
+  }
 
-  for (let rowNumber = 2; rowNumber <= source.rowCount; rowNumber += 1) {
+  for (let rowNumber = headerRowNumber + 1; rowNumber <= source.rowCount; rowNumber += 1) {
     if (!lineNumbers.has(rowNumber)) continue;
     const sourceRow = source.getRow(rowNumber);
     const values = Array.from({ length: source.columnCount }, (_, index) =>
@@ -140,31 +247,35 @@ function createTreatedWorksheet(
 
 function createTreatedWorkbook(
   source: ExcelJS.Worksheet,
+  headerRowNumber: number,
   lineNumbers: Set<number>,
 ): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   const treatedSheet = workbook.addWorksheet("tratada");
-  createTreatedWorksheet(source, treatedSheet, lineNumbers);
+  createTreatedWorksheet(source, treatedSheet, headerRowNumber, lineNumbers);
   return workbook;
 }
 
-function buildSourceRows(worksheet: ExcelJS.Worksheet): CanceladaSourceRow[] {
+function buildSourceRows(
+  worksheet: ExcelJS.Worksheet,
+  layout: SourceLayout,
+): CanceladaSourceRow[] {
   const rows: CanceladaSourceRow[] = [];
 
-  for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber += 1) {
+  for (let rowNumber = layout.headerRowNumber + 1; rowNumber <= worksheet.rowCount; rowNumber += 1) {
     const row = worksheet.getRow(rowNumber);
     const parsed: CanceladaSourceRow = {
       linhaOrigem: rowNumber,
-      codigo: coerceString(row.getCell("A").value),
-      nome: coerceString(row.getCell("B").value),
-      cpfCnpj: coerceString(row.getCell("C").value),
-      dataVencimento: coerceDate(row.getCell("M").value),
-      titulo: coerceNumber(row.getCell("S").value),
-      dataPagamento: coerceDate(row.getCell("U").value),
-      parcela: coerceString(row.getCell("AE").value),
-      loteNf: coerceString(row.getCell("AG").value),
-      nf: coerceString(row.getCell("AH").value),
-      dtEmissao: coerceDate(row.getCell("AI").value),
+      codigo: coerceString(row.getCell(layout.codigoCol).value),
+      nome: coerceString(row.getCell(layout.nomeCol).value),
+      cpfCnpj: coerceString(row.getCell(layout.cpfCnpjCol).value),
+      dataVencimento: coerceDate(row.getCell(layout.dataVencimentoCol).value),
+      titulo: coerceNumber(row.getCell(layout.tituloCol).value),
+      dataPagamento: coerceDate(row.getCell(layout.dataPagamentoCol).value),
+      parcela: coerceString(row.getCell(layout.parcelaCol).value),
+      loteNf: coerceString(row.getCell(layout.loteNfCol).value),
+      nf: coerceString(row.getCell(layout.nfCol).value),
+      dtEmissao: coerceDate(row.getCell(layout.dtEmissaoCol).value),
     };
 
     if (!isValidRow(parsed)) continue;
@@ -174,7 +285,7 @@ function buildSourceRows(worksheet: ExcelJS.Worksheet): CanceladaSourceRow[] {
   if (rows.length === 0) {
     throw new ContraprestacoesError(
       "Base mensal de canceladas sem registros validos.",
-      "Nenhum registro valido foi encontrado na aba original da base de Canceladas.",
+      "Nenhum registro valido foi encontrado na base de Canceladas.",
     );
   }
 
@@ -238,12 +349,12 @@ export class CanceladasWorkbookProcessor {
     });
 
     const sourceWorkbook = new ExcelJS.Workbook();
-    await sourceWorkbook.xlsx.load(fileBuffer as unknown as ExcelJS.Buffer);
+    await sourceWorkbook.xlsx.load(fileBuffer as unknown as ExcelJS.Buffer, XLSX_LOAD_OPTIONS);
 
     onProgress?.({
       value: 24,
-      label: "Localizando aba original",
-      detail: "Buscando a aba original para iniciar o tratamento mensal.",
+      label: "Localizando base",
+      detail: "Buscando a aba e o cabecalho corretos para iniciar o tratamento mensal.",
     });
 
     const originalSheet =
@@ -254,18 +365,26 @@ export class CanceladasWorkbookProcessor {
 
     if (!originalSheet) {
       throw new ContraprestacoesError(
-        "Aba original da base de canceladas ausente.",
-        "Nao foi possivel localizar a aba original no arquivo de Canceladas.",
+        "Base de canceladas ausente.",
+        "Nao foi possivel localizar uma aba valida no arquivo de Canceladas.",
+      );
+    }
+
+    const sourceLayout = resolveSourceLayout(originalSheet);
+    if (!sourceLayout) {
+      throw new ContraprestacoesError(
+        "Cabecalho da base de canceladas nao reconhecido.",
+        "Nao foi possivel identificar o cabecalho da base de Canceladas. Verifique se o arquivo segue o padrao exportado com colunas como Codigo, Nome Fantasia, CPF_CNPJ, Data Vencimento, Titulo, Data Pagamento, Parcela, Lote NF, NF e Dt. Emissao.",
       );
     }
 
     onProgress?.({
       value: 36,
       label: "Lendo linhas da base",
-      detail: "Extraindo as colunas operacionais da aba original para montar a base de trabalho.",
+      detail: "Extraindo as colunas operacionais da base para montar a area de trabalho.",
     });
 
-    const sourceRows = buildSourceRows(originalSheet);
+    const sourceRows = buildSourceRows(originalSheet, sourceLayout);
     const competenciaLastDay = lastDayOfMonth(competencia);
 
     onProgress?.({
@@ -287,11 +406,15 @@ export class CanceladasWorkbookProcessor {
     onProgress?.({
       value: 58,
       label: "Montando base tratada",
-      detail: "Recriando a aba tratada com as linhas mantidas da competencia.",
+      detail: "Recriando a aba tratada com o topo original e as linhas mantidas da competencia.",
     });
 
     const treatedLineNumbers = new Set(treatedRows.map((row) => row.linhaOrigem));
-    const treatedWorkbook = createTreatedWorkbook(originalSheet, treatedLineNumbers);
+    const treatedWorkbook = createTreatedWorkbook(
+      originalSheet,
+      sourceLayout.headerRowNumber,
+      treatedLineNumbers,
+    );
 
     onProgress?.({
       value: 68,

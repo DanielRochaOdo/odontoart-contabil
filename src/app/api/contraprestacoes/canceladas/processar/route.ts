@@ -2,10 +2,12 @@ import JSZip from "jszip";
 import { NextResponse } from "next/server";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
 import { CanceladasWorkbookProcessor } from "@/features/contraprestacoes/services/CanceladasWorkbookProcessor";
-import { parseCompetencia } from "@/features/eventos/services/utils";
+import { CompetenciaDetector } from "@/features/eventos/services/CompetenciaDetector";
+import { competenciaToString, parseCompetencia } from "@/features/eventos/services/utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 function isXlsx(file: File): boolean {
   return file.name.toLowerCase().endsWith(".xlsx");
@@ -169,10 +171,16 @@ export async function POST(request: Request) {
 
     const processor = new CanceladasWorkbookProcessor();
     const fileBuffer = new Uint8Array(await file.arrayBuffer());
-    const competencia = parseCompetencia(
-      typeof competenciaRaw === "string" ? competenciaRaw : undefined,
-    );
+    const competencia =
+      typeof competenciaRaw === "string" && /^\d{4}-\d{2}$/.test(competenciaRaw)
+        ? parseCompetencia(competenciaRaw)
+        : ((await new CompetenciaDetector().detect(fileBuffer, file.name)) ??
+          parseCompetencia(undefined));
     const result = await processor.process(fileBuffer, competencia);
+    const persistResult = await persistProcessedRows({
+      competencia: result.competencia,
+      rowsToImport: result.rowsToImport,
+    });
 
     const zip = new JSZip();
     result.generatedFiles.forEach((fileItem) => {
@@ -188,8 +196,10 @@ export async function POST(request: Request) {
         registrosTratados: result.registrosTratados,
         registrosPf: result.registrosPf,
         registrosPj: result.registrosPj,
-        registrosImportados: 0,
+        registrosImportados: persistResult.inserted,
+        registrosDuplicadosNoParc: persistResult.skippedDuplicated,
         arquivosGerados: result.generatedFiles.length,
+        competenciaDetectada: competenciaToString(competencia),
       }),
       "utf8",
     ).toString("base64");

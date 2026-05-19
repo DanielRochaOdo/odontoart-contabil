@@ -2,6 +2,8 @@ import ExcelJS from "exceljs";
 import { Competencia } from "@/features/eventos/domain/types";
 import { coerceDate, coerceString, normalizeText } from "@/features/eventos/services/utils";
 
+const MAX_WORKSHEETS_TO_ANALYZE = 2;
+
 const MONTHS_PT: Record<string, number> = {
   JANEIRO: 1,
   FEVEREIRO: 2,
@@ -28,7 +30,7 @@ function toCompetencia(ano: number, mes: number): Competencia | null {
 
 function readStringFromRows(workbook: ExcelJS.Workbook): string[] {
   const lines: string[] = [];
-  for (const sheet of workbook.worksheets) {
+  for (const sheet of workbook.worksheets.slice(0, MAX_WORKSHEETS_TO_ANALYZE)) {
     for (let r = 1; r <= Math.min(sheet.rowCount, 20); r += 1) {
       for (let c = 1; c <= Math.min(sheet.columnCount, 8); c += 1) {
         const text = coerceString(sheet.getRow(r).getCell(c).value);
@@ -91,7 +93,7 @@ function detectFromDates(workbook: ExcelJS.Workbook): Competencia | null {
     "VENCIMENTO",
   ]);
 
-  for (const sheet of workbook.worksheets) {
+  for (const sheet of workbook.worksheets.slice(0, MAX_WORKSHEETS_TO_ANALYZE)) {
     let headerRow = -1;
     let columns: number[] = [];
 
