@@ -135,7 +135,11 @@ function findColumn(headerMap: Map<string, number>, aliases: string[]): number {
 }
 
 function resolveSourceLayout(worksheet: ExcelJS.Worksheet): SourceLayout | null {
-  for (let rowNumber = 1; rowNumber <= Math.min(HEADER_SCAN_LIMIT, worksheet.rowCount); rowNumber += 1) {
+  for (
+    let rowNumber = 1;
+    rowNumber <= Math.min(HEADER_SCAN_LIMIT, worksheet.rowCount);
+    rowNumber += 1
+  ) {
     const headerMap = readHeaderMap(worksheet, rowNumber);
     const codigoCol = findColumn(headerMap, ["Codigo", "Código"]);
     const nomeCol = findColumn(headerMap, ["Nome", "Nome Fantasia"]);
@@ -212,57 +216,17 @@ function shouldKeepRow(row: CanceladaSourceRow, competenciaLastDay: Date): boole
   return true;
 }
 
-function copyColumnWidths(source: ExcelJS.Worksheet, target: ExcelJS.Worksheet): void {
-  for (let colNumber = 1; colNumber <= source.columnCount; colNumber += 1) {
-    const sourceColumn = source.getColumn(colNumber);
-    const targetColumn = target.getColumn(colNumber);
-    if (sourceColumn.width) targetColumn.width = sourceColumn.width;
-  }
-}
-
-function createTreatedWorksheet(
-  source: ExcelJS.Worksheet,
-  target: ExcelJS.Worksheet,
-  headerRowNumber: number,
-  lineNumbers: Set<number>,
-): void {
-  copyColumnWidths(source, target);
-
-  for (let rowNumber = 1; rowNumber <= headerRowNumber; rowNumber += 1) {
-    const values = Array.from({ length: source.columnCount }, (_, index) =>
-      source.getRow(rowNumber).getCell(index + 1).value,
-    );
-    target.addRow(values);
-  }
-
-  for (let rowNumber = headerRowNumber + 1; rowNumber <= source.rowCount; rowNumber += 1) {
-    if (!lineNumbers.has(rowNumber)) continue;
-    const sourceRow = source.getRow(rowNumber);
-    const values = Array.from({ length: source.columnCount }, (_, index) =>
-      sourceRow.getCell(index + 1).value,
-    );
-    target.addRow(values);
-  }
-}
-
-function createTreatedWorkbook(
-  source: ExcelJS.Worksheet,
-  headerRowNumber: number,
-  lineNumbers: Set<number>,
-): ExcelJS.Workbook {
-  const workbook = new ExcelJS.Workbook();
-  const treatedSheet = workbook.addWorksheet("tratada");
-  createTreatedWorksheet(source, treatedSheet, headerRowNumber, lineNumbers);
-  return workbook;
-}
-
 function buildSourceRows(
   worksheet: ExcelJS.Worksheet,
   layout: SourceLayout,
 ): CanceladaSourceRow[] {
   const rows: CanceladaSourceRow[] = [];
 
-  for (let rowNumber = layout.headerRowNumber + 1; rowNumber <= worksheet.rowCount; rowNumber += 1) {
+  for (
+    let rowNumber = layout.headerRowNumber + 1;
+    rowNumber <= worksheet.rowCount;
+    rowNumber += 1
+  ) {
     const row = worksheet.getRow(rowNumber);
     const parsed: CanceladaSourceRow = {
       linhaOrigem: rowNumber,
@@ -399,23 +363,6 @@ export class CanceladasWorkbookProcessor {
     const competenciaValue = competenciaToString(competencia);
     const cpt = competenciaToken(competencia);
 
-    if (normalizeSheetName(originalSheet.name) !== "ORIGINAL") {
-      originalSheet.name = "original";
-    }
-
-    onProgress?.({
-      value: 58,
-      label: "Montando base tratada",
-      detail: "Recriando a aba tratada com o topo original e as linhas mantidas da competencia.",
-    });
-
-    const treatedLineNumbers = new Set(treatedRows.map((row) => row.linhaOrigem));
-    const treatedWorkbook = createTreatedWorkbook(
-      originalSheet,
-      sourceLayout.headerRowNumber,
-      treatedLineNumbers,
-    );
-
     onProgress?.({
       value: 68,
       label: "Gerando planilhas finais",
@@ -448,13 +395,6 @@ export class CanceladasWorkbookProcessor {
     }));
 
     onProgress?.({
-      value: 84,
-      label: "Serializando base tratada",
-      detail: "Convertendo a base tratada novamente para XLSX.",
-    });
-    const treatedWorkbookBuffer = await serializeWorkbook(treatedWorkbook);
-
-    onProgress?.({
       value: 92,
       label: "Serializando planilha final",
       detail: "Convertendo a planilha final PF/PJ para XLSX.",
@@ -469,10 +409,6 @@ export class CanceladasWorkbookProcessor {
       registrosPj: pjRows.length,
       rowsToImport,
       generatedFiles: [
-        {
-          fileName: `BASE CANCELADAS ${cpt} - Tratada.xlsx`,
-          buffer: treatedWorkbookBuffer,
-        },
         {
           fileName: `Mensalidades Canceladas ${cpt}.xlsx`,
           buffer: finalWorkbookBuffer,

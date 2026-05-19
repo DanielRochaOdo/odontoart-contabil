@@ -139,6 +139,7 @@ const DEFAULT_ERROR =
   "Nao foi possivel processar os eventos agora. Confira os arquivos e tente novamente.";
 const DEFAULT_CONTRAP_ERROR =
   "Nao foi possivel gerar o arquivo de contraprestacoes agora. Confira a base e tente novamente.";
+const VERCEL_SAFE_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 function currentMonth(): string {
   const now = new Date();
@@ -738,86 +739,200 @@ export default function Home() {
     await flushProgressFrame();
 
     try {
-      setCanceladasProcessProgress({
-        active: true,
-        value: 16,
-        label: "Enviando base",
-        detail: "Transferindo a base de Canceladas para processamento no servidor.",
-      });
-      await flushProgressFrame();
-
-      const formData = new FormData();
-      formData.append("arquivo", canceladasProcessFile);
-      if (competencia) {
-        formData.append("competencia", competencia);
-      }
-
-      const response = await fetch("/api/contraprestacoes/canceladas/processar", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { message?: string }
-          | null;
-        throw new Error(
-          payload?.message ?? "Nao foi possivel processar a base mensal de Canceladas.",
-        );
-      }
-
-      setCanceladasProcessProgress({
-        active: true,
-        value: 76,
-        label: "Lendo resultado",
-        detail: "Recebendo o pacote mensal e o resumo final do processamento.",
-      });
-      await flushProgressFrame();
-
-      const summaryHeader = response.headers.get("x-odonto-canceladas-summary");
-      const summary = summaryHeader
-        ? (JSON.parse(atob(summaryHeader)) as CanceladasProcessSummary & {
-            competenciaDetectada?: string;
-          })
-        : null;
-
-      if (summary?.competenciaDetectada && summary.competenciaDetectada !== competencia) {
-        setCompetencia(summary.competenciaDetectada);
-        setCanceladasCompetenciaHint(
-          `Competencia confirmada em Canceladas: ${summary.competenciaDetectada}.`,
-        );
-      }
-
-      if (summary) {
-        setCanceladasProcessSummary({
-          competencia: summary.competencia,
-          registrosEntrada: summary.registrosEntrada,
-          registrosTratados: summary.registrosTratados,
-          registrosPf: summary.registrosPf,
-          registrosPj: summary.registrosPj,
-          registrosImportados: summary.registrosImportados,
-          registrosDuplicadosNoParc: summary.registrosDuplicadosNoParc,
-          arquivosGerados: summary.arquivosGerados,
+      const persistHistorico = async (
+        payload: { competencia: string; rowsToImport: unknown[] },
+      ): Promise<{ inserted: number; skippedDuplicated: number }> => {
+        const persistResponse = await fetch("/api/contraprestacoes/canceladas/processar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         });
+
+        const persistPayload = (await persistResponse.json().catch(() => null)) as
+          | { inserted?: number; skippedDuplicated?: number; message?: string }
+          | null;
+
+        if (!persistResponse.ok) {
+          throw new Error(
+            persistPayload?.message ??
+              "Nao foi possivel atualizar o historico mensal de Canceladas.",
+          );
+        }
+
+        return {
+          inserted: persistPayload?.inserted ?? 0,
+          skippedDuplicated: persistPayload?.skippedDuplicated ?? 0,
+        };
+      };
+
+      const shouldProcessLocally = canceladasProcessFile.size > VERCEL_SAFE_UPLOAD_BYTES;
+
+      if (shouldProcessLocally) {
+        const { processCanceladasInWorker } = await import(
+          "@/features/contraprestacoes/services/CanceladasWorkerClient"
+        );
+
+        setCanceladasProcessProgress({
+          active: true,
+          value: 16,
+          label: "Processando localmente",
+          detail:
+            "O arquivo excede o limite de upload da Vercel. Processando no navegador e enviando apenas o historico final.",
+        });
+        await flushProgressFrame();
+
+        const result = await processCanceladasInWorker(
+          {
+            competenciaRaw: competencia,
+            file: canceladasProcessFile,
+          },
+          (progress) => {
+            setCanceladasProcessProgress({
+              active: true,
+              value: progress.value,
+              label: progress.label,
+              detail: progress.detail,
+            });
+          },
+        );
+
+        if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
+          setCompetencia(result.competenciaDetectada);
+          setCanceladasCompetenciaHint(
+            `Competencia confirmada em Canceladas: ${result.competenciaDetectada}.`,
+          );
+        }
+
+        setCanceladasProcessProgress({
+          active: true,
+          value: 78,
+          label: "Atualizando historico",
+          detail: "Gravando o historico mensal sem duplicar registros por No Parc.",
+        });
+        await flushProgressFrame();
+
+        const persisted = await persistHistorico({
+          competencia: result.result.competencia,
+          rowsToImport: result.result.rowsToImport,
+        });
+
+        setCanceladasProcessSummary({
+          competencia: result.result.competencia,
+          registrosEntrada: result.result.registrosEntrada,
+          registrosTratados: result.result.registrosTratados,
+          registrosPf: result.result.registrosPf,
+          registrosPj: result.result.registrosPj,
+          registrosImportados: persisted.inserted,
+          registrosDuplicadosNoParc: persisted.skippedDuplicated,
+          arquivosGerados: result.result.generatedFiles.length,
+        });
+
+        setCanceladasProcessProgress({
+          active: true,
+          value: 88,
+          label: "Gerando download",
+          detail: "Compactando a base tratada e a planilha final para baixar o pacote mensal.",
+        });
+        await flushProgressFrame();
+
+        downloadBlob(
+          new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/zip" }),
+          result.fileName,
+        );
+        setCanceladasSuccess(
+          `Processamento mensal concluido. ${persisted.inserted} registro(s) incluído(s) no historico e ${persisted.skippedDuplicated} duplicado(s) por No Parc ignorado(s).`,
+        );
+      } else {
+        setCanceladasProcessProgress({
+          active: true,
+          value: 16,
+          label: "Enviando base",
+          detail: "Transferindo a base de Canceladas para processamento no servidor.",
+        });
+        await flushProgressFrame();
+
+        const formData = new FormData();
+        formData.append("arquivo", canceladasProcessFile);
+        if (competencia) {
+          formData.append("competencia", competencia);
+        }
+
+        const response = await fetch("/api/contraprestacoes/canceladas/processar", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.status === 413) {
+          throw new Error(
+            "A Vercel rejeitou o upload direto por tamanho. Tente novamente: o arquivo sera processado localmente se continuar acima do limite.",
+          );
+        }
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as
+            | { message?: string }
+            | null;
+          throw new Error(
+            payload?.message ?? "Nao foi possivel processar a base mensal de Canceladas.",
+          );
+        }
+
+        setCanceladasProcessProgress({
+          active: true,
+          value: 76,
+          label: "Lendo resultado",
+          detail: "Recebendo o pacote mensal e o resumo final do processamento.",
+        });
+        await flushProgressFrame();
+
+        const summaryHeader = response.headers.get("x-odonto-canceladas-summary");
+        const summary = summaryHeader
+          ? (JSON.parse(atob(summaryHeader)) as CanceladasProcessSummary & {
+              competenciaDetectada?: string;
+            })
+          : null;
+
+        if (summary?.competenciaDetectada && summary.competenciaDetectada !== competencia) {
+          setCompetencia(summary.competenciaDetectada);
+          setCanceladasCompetenciaHint(
+            `Competencia confirmada em Canceladas: ${summary.competenciaDetectada}.`,
+          );
+        }
+
+        if (summary) {
+          setCanceladasProcessSummary({
+            competencia: summary.competencia,
+            registrosEntrada: summary.registrosEntrada,
+            registrosTratados: summary.registrosTratados,
+            registrosPf: summary.registrosPf,
+            registrosPj: summary.registrosPj,
+            registrosImportados: summary.registrosImportados,
+            registrosDuplicadosNoParc: summary.registrosDuplicadosNoParc,
+            arquivosGerados: summary.arquivosGerados,
+          });
+        }
+
+        setCanceladasProcessProgress({
+          active: true,
+          value: 88,
+          label: "Gerando download",
+          detail: "Compactando a base tratada e a planilha final para baixar o pacote mensal.",
+        });
+        await flushProgressFrame();
+
+        const blob = await response.blob();
+        const fileName =
+          response.headers
+            .get("Content-Disposition")
+            ?.match(/filename=\"(.+)\"/)?.[1] ?? "Canceladas.zip";
+        downloadBlob(blob, fileName);
+        setCanceladasSuccess(
+          `Processamento mensal concluido. ${summary?.registrosImportados ?? 0} registro(s) incluído(s) no historico e ${summary?.registrosDuplicadosNoParc ?? 0} duplicado(s) por No Parc ignorado(s).`,
+        );
       }
 
-      setCanceladasProcessProgress({
-        active: true,
-        value: 88,
-        label: "Gerando download",
-        detail: "Compactando a base tratada e a planilha final para baixar o pacote mensal.",
-      });
-      await flushProgressFrame();
-
-      const blob = await response.blob();
-      const fileName =
-        response.headers
-          .get("Content-Disposition")
-          ?.match(/filename=\"(.+)\"/)?.[1] ?? "Canceladas.zip";
-      downloadBlob(blob, fileName);
-      setCanceladasSuccess(
-        `Processamento mensal concluido. ${summary?.registrosImportados ?? 0} registro(s) incluído(s) no historico e ${summary?.registrosDuplicadosNoParc ?? 0} duplicado(s) por No Parc ignorado(s).`,
-      );
       setCanceladasProcessFile(null);
       setCanceladasPage(1);
       await loadCanceladas({ page: 1 });
