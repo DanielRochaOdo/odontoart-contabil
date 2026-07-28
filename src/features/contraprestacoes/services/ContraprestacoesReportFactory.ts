@@ -1,25 +1,31 @@
 import ExcelJS from "exceljs";
-import { ProcessedRecebidaRow } from "@/features/contraprestacoes/domain/types";
+import {
+  ContraprestacoesScope,
+  ContraprestacoesReportId,
+  ProcessedRecebidaRow,
+} from "@/features/contraprestacoes/domain/types";
 import { Competencia } from "@/features/eventos/domain/types";
 
 type CellKind = "string" | "number" | "currency" | "date";
-type WorkbookMode = "split" | "single";
+export type WorkbookMode = "split" | "single";
 
-interface ColumnDefinition<T> {
+export interface ColumnDefinition<T> {
   header: string;
   width: number;
   kind: CellKind;
   value: (row: T) => string | number | Date | null;
 }
 
-interface WorkbookDefinition {
+export interface WorkbookDefinition {
+  reportId: ContraprestacoesReportId;
   fileName: string;
   mode: WorkbookMode;
   rows: ProcessedRecebidaRow[];
   columns: ColumnDefinition<ProcessedRecebidaRow>[];
 }
 
-interface GeneratedWorkbook {
+export interface GeneratedWorkbook {
+  reportId: ContraprestacoesReportId;
   fileName: string;
   buffer: Uint8Array;
 }
@@ -32,17 +38,21 @@ const CARD_DEBIT_FEE = 0.0069;
 const AGENTE_RECEBEDOR_FEE = 3.28;
 const PIX_RECORRENTE_FEE = 2;
 
-const BOLETO_TYPES = new Set([
-  "BANCO DO BRASIL CLINICO",
-  "PIX ODONTOART - P4X",
-  "ITAU PJ",
-  "BANCO DO BRASIL CLINICO EMPRESA",
-  "DEPOSITO BANCARIO BB",
-  "PIX CLINICO",
-  "DEPOSITO BANCARIO ITAU",
-  "BRADESCO",
-  "SANTANDER PMF",
-]);
+const BOLETO_TYPES = new Set(
+  [
+    "BANCO DO BRASIL CLINICO",
+    "PIX ODONTOART - P4X",
+    "ITAU PJ",
+    "BANCO DO BRASIL CLINICO EMPRESA",
+    "DEPOSITO BANCARIO BB",
+    "PIX CLINICO",
+    "PIX - CLINICO",
+    "DEPOSITO BANCARIO ITAU",
+    "DEPOSITO BANCARIO",
+    "BRADESCO",
+    "SANTANDER PMF",
+  ].map((value) => normalizeText(value)),
+);
 
 const CARTAO_CREDITO_TYPES = new Set([
   "CARTAO DE CREDITO ODONTOART - P4X EXTERNO",
@@ -106,10 +116,6 @@ function normalizedTipoRecebimento(row: ProcessedRecebidaRow): string {
   return normalizeText(row.tipoRecebimento);
 }
 
-function normalizedLote(row: ProcessedRecebidaRow): string {
-  return normalizeText(row.loteNf);
-}
-
 function createWorksheet(
   workbook: ExcelJS.Workbook,
   name: string,
@@ -151,7 +157,16 @@ async function buildWorkbook(definition: WorkbookDefinition): Promise<GeneratedW
   const workbook = new ExcelJS.Workbook();
 
   if (definition.mode === "single") {
-    createWorksheet(workbook, "Base", definition.rows, definition.columns);
+    const normalizedFileName = normalizeText(definition.fileName);
+    const sheetName = normalizedFileName.includes("DEVOLUCAO")
+      ? "PF e PJ"
+      : "Base";
+    createWorksheet(
+      workbook,
+      sheetName,
+      definition.rows,
+      definition.columns,
+    );
   } else {
     const { pf, pj } = splitRows(definition.rows);
     createWorksheet(workbook, "PF", pf, definition.columns);
@@ -160,6 +175,7 @@ async function buildWorkbook(definition: WorkbookDefinition): Promise<GeneratedW
 
   const data = await workbook.xlsx.writeBuffer();
   return {
+    reportId: definition.reportId,
     fileName: definition.fileName,
     buffer: new Uint8Array(data),
   };
@@ -177,7 +193,6 @@ function commonColumnsBoletoRecovered(
     { header: "VALOR BRUTO", width: 16, kind: "currency", value: valorBruto },
     { header: "DESCONTO", width: 16, kind: "currency", value: desconto },
     { header: "ACRESCIMO", width: 16, kind: "currency", value: acrescimo },
-    { header: "AJUSTE", width: 16, kind: "currency", value: signedAdjustment },
     { header: "ISS", width: 14, kind: "currency", value: (row) => row.imposto },
     { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     {
@@ -261,7 +276,6 @@ function columnsRecoveredCash(
     { header: "VALOR BRUTO", width: 16, kind: "currency", value: valorBruto },
     { header: "DESCONTO", width: 16, kind: "currency", value: desconto },
     { header: "ACRESCIMO", width: 16, kind: "currency", value: acrescimo },
-    { header: "AJUSTE", width: 16, kind: "currency", value: signedAdjustment },
     { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     { header: "DATA CREDITO", width: 16, kind: "date", value: (row) => row.dataPagamento },
     { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
@@ -305,25 +319,18 @@ function columnsReceivedCash(
     { header: "VALOR BRUTO", width: 16, kind: "currency", value: valorBruto },
     { header: "DESCONTO", width: 16, kind: "currency", value: desconto },
     { header: "ACRESCIMO", width: 16, kind: "currency", value: acrescimo },
-    destino === "Caixinha"
-      ? { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento }
-      : { header: "AJUSTE", width: 16, kind: "currency", value: signedAdjustment },
+    { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     destino === "Caixinha"
       ? { header: "DATA CREDITO", width: 16, kind: creditDateKind, value: (row) => row.dataPagamento }
-      : { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
-    destino === "Caixinha"
-      ? { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela }
       : {
           header: "DATA CREDITO",
           width: 16,
           kind: "date",
           value: () => endOfNextMonth(competencia),
         },
-    destino === "Caixinha"
-      ? { header: "DESTINO", width: 28, kind: "string", value: () => destino }
-      : { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
+    { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
     ...(destino === "Caixinha"
-      ? []
+      ? [{ header: "DESTINO", width: 28, kind: "string" as const, value: () => destino }]
       : [
           {
             header: "DESTINO",
@@ -344,7 +351,6 @@ function columnsDevolucao(): ColumnDefinition<ProcessedRecebidaRow>[] {
     { header: "VALOR BRUTO", width: 16, kind: "currency", value: valorBruto },
     { header: "DESCONTO", width: 16, kind: "currency", value: desconto },
     { header: "ACRESCIMO", width: 16, kind: "currency", value: acrescimo },
-    { header: "AJUSTE", width: 16, kind: "currency", value: signedAdjustment },
     { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     { header: "DATA CREDITO", width: 16, kind: "date", value: (row) => row.dataPagamento },
     { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
@@ -415,148 +421,231 @@ function columnsBaseTratada(): ColumnDefinition<ProcessedRecebidaRow>[] {
   ];
 }
 
-function takeRowsUntilNearTarget(rows: ProcessedRecebidaRow[], target: number): ProcessedRecebidaRow[] {
-  const selected: ProcessedRecebidaRow[] = [];
-  let total = 0;
+function hashText(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
 
-  for (const row of rows) {
-    const nextTotal = total + row.valorPagamento;
-    if (selected.length === 0) {
-      selected.push(row);
-      total = nextTotal;
-      continue;
+function createSeededRandom(seed: number): () => number {
+  let current = seed || 1;
+  return () => {
+    current = (current + 0x6d2b79f5) | 0;
+    let value = Math.imul(current ^ (current >>> 15), 1 | current);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleRows(rows: ProcessedRecebidaRow[], seed: number): ProcessedRecebidaRow[] {
+  const random = createSeededRandom(seed);
+  const next = [...rows];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+  return next;
+}
+
+function takeRowsNearTargetDeterministic(
+  rows: ProcessedRecebidaRow[],
+  target: number,
+  tolerance: number,
+  seedKey: string,
+): ProcessedRecebidaRow[] {
+  if (rows.length === 0) return [];
+
+  const minTarget = target * (1 - tolerance);
+  const maxTarget = target * (1 + tolerance);
+  let bestRows: ProcessedRecebidaRow[] = [];
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestTotal = 0;
+  const baseSeed = hashText(seedKey);
+
+  for (let attempt = 0; attempt < Math.min(64, rows.length * 2); attempt += 1) {
+    const shuffled = shuffleRows(rows, baseSeed + attempt);
+    const selected: ProcessedRecebidaRow[] = [];
+    let total = 0;
+
+    for (const row of shuffled) {
+      const nextTotal = total + row.valorPagamento;
+      if (nextTotal > maxTarget && total >= minTarget) continue;
+
+      const currentDistance = Math.abs(target - total);
+      const nextDistance = Math.abs(target - nextTotal);
+      const improvesWithinCap = nextTotal <= maxTarget && nextDistance <= currentDistance;
+      const needsMinimum = total < minTarget;
+
+      if (selected.length === 0 || improvesWithinCap || needsMinimum) {
+        selected.push(row);
+        total = nextTotal;
+      }
     }
 
-    const currentDistance = Math.abs(target - total);
-    const nextDistance = Math.abs(target - nextTotal);
+    const inWindow = total >= minTarget && total <= maxTarget;
+    const distance = Math.abs(target - total);
+    const bestInWindow = bestTotal >= minTarget && bestTotal <= maxTarget;
 
-    if (nextDistance <= currentDistance || total < target) {
-      selected.push(row);
-      total = nextTotal;
-      continue;
+    if (
+      (inWindow && !bestInWindow) ||
+      (inWindow === bestInWindow && distance < bestDistance)
+    ) {
+      bestRows = selected;
+      bestDistance = distance;
+      bestTotal = total;
     }
-
-    break;
   }
 
-  return selected;
+  return bestRows.sort((left, right) => left.linhaOrigem - right.linhaOrigem);
+}
+
+export function buildWorkbookDefinitions(
+  rows: ProcessedRecebidaRow[],
+  competencia: Competencia,
+  escopo: ContraprestacoesScope,
+): WorkbookDefinition[] {
+  const token = competenciaToken(competencia);
+  const recuperadas = rows.filter((row) => row.grupo === "RECUPERADA");
+  const recebidas = rows.filter((row) => row.grupo === "RECEBIDA");
+  const devolucoes = recebidas.filter((row) => row.devolucaoMensalidade);
+  const recebidasNormais = recebidas.filter((row) => !row.devolucaoMensalidade);
+  const dinheiroRecebidas = recebidasNormais.filter((row) => normalizedTipoRecebimento(row) === "DINHEIRO");
+  const caixinha = takeRowsNearTargetDeterministic(dinheiroRecebidas, 1000, 0.05, token);
+  const caixinhaKeys = new Set(caixinha.map((row) => row.linhaOrigem));
+  const agenteRecebedor = dinheiroRecebidas.filter((row) => !caixinhaKeys.has(row.linhaOrigem));
+  const boletoRows = recebidasNormais.filter((row) => {
+    if (caixinhaKeys.has(row.linhaOrigem)) return false;
+    const tipo = normalizedTipoRecebimento(row);
+    return BOLETO_TYPES.has(tipo);
+  });
+
+  const sharedDefinition: WorkbookDefinition = {
+    reportId: "base-tratada",
+    fileName: `BASE RECEBIDAS ${token} - Tratada.xlsx`,
+    mode: "single",
+    rows,
+    columns: columnsBaseTratada(),
+  };
+
+  const recuperadasDefinitions: WorkbookDefinition[] = [
+    {
+      reportId: "recuperada-boleto",
+      fileName: `Mensalidade Recuperados ${token} - Boleto.xlsx`,
+      mode: "split",
+      rows: recuperadas.filter((row) => BOLETO_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: commonColumnsBoletoRecovered(),
+    },
+    {
+      reportId: "recuperada-cartao-credito",
+      fileName: `Mensalidade Recuperados ${token} - Cartao de credito.xlsx`,
+      mode: "split",
+      rows: recuperadas.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsCard(31, CARD_CREDIT_FEE),
+    },
+    {
+      reportId: "recuperada-cartao-debito",
+      fileName: `Mensalidade Recuperados ${token} - Cartao de debito.xlsx`,
+      mode: "split",
+      rows: recuperadas.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsCard(1, CARD_DEBIT_FEE),
+    },
+    {
+      reportId: "recuperada-dinheiro-caixinha",
+      fileName: `Mensalidade Recuperados ${token} - Dinheiro - Caixinha.xlsx`,
+      mode: "split",
+      rows: recuperadas.filter((row) => normalizedTipoRecebimento(row) === "DINHEIRO"),
+      columns: columnsRecoveredCash(),
+    },
+    {
+      reportId: "recuperada-enel",
+      fileName: `Mensalidade Recuperados ${token} - Enel.xlsx`,
+      mode: "single",
+      rows: recuperadas.filter((row) => ENEL_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsEnel(competencia),
+    },
+  ];
+
+  const recebidasDefinitions: WorkbookDefinition[] = [
+    {
+      reportId: "recebida-boleto",
+      fileName: `Mensalidade Recebida ${token} - Boleto.xlsx`,
+      mode: "split",
+      rows: boletoRows,
+      columns: commonColumnsBoletoReceived(),
+    },
+    {
+      reportId: "recebida-cartao-credito",
+      fileName: `Mensalidade Recebida ${token} - Cartao de credito.xlsx`,
+      mode: "split",
+      rows: recebidasNormais.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsCard(31, CARD_CREDIT_FEE),
+    },
+    {
+      reportId: "recebida-cartao-debito",
+      fileName: `Mensalidade Recebida ${token} - Cartao de debito.xlsx`,
+      mode: "split",
+      rows: recebidasNormais.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsCard(1, CARD_DEBIT_FEE),
+    },
+    {
+      reportId: "recebida-enel",
+      fileName: `Mensalidade Recebida ${token} - Enel.xlsx`,
+      mode: "single",
+      rows: recebidasNormais.filter((row) => ENEL_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsEnel(competencia),
+    },
+    {
+      reportId: "recebida-dinheiro-caixinha",
+      fileName: `Mensalidade Recebida ${token} - Dinheiro - Caixinha.xlsx`,
+      mode: "split",
+      rows: caixinha,
+      columns: columnsReceivedCash(competencia, "Caixinha"),
+    },
+    {
+      reportId: "recebida-agente-recebedor",
+      fileName: `Mensalidade Recebida ${token} - Agente recebedor.xlsx`,
+      mode: "split",
+      rows: agenteRecebedor,
+      columns: columnsReceivedCash(competencia, "Agente Recebedor - Banco do Brasil"),
+    },
+    {
+      reportId: "recebida-devolucao",
+      fileName: `Mensalidade Recebida ${token} - Devolucao de Mensalidade.xlsx`,
+      mode: "single",
+      rows: devolucoes,
+      columns: columnsDevolucao(),
+    },
+    {
+      reportId: "recebida-debito-em-conta",
+      fileName: `Mensalidade Recebida ${token} - Debito em Conta.xlsx`,
+      mode: "single",
+      rows: recebidasNormais.filter((row) => normalizedTipoRecebimento(row) === "DEBITO EM CONTA BB"),
+      columns: columnsDebitoEmConta(),
+    },
+    {
+      reportId: "recebida-pix-recorrente",
+      fileName: `Mensalidade Recebida ${token} - PIX Recorrente.xlsx`,
+      mode: "split",
+      rows: recebidasNormais.filter((row) => PIX_RECORRENTE_TYPES.has(normalizedTipoRecebimento(row))),
+      columns: columnsPixRecorrente(),
+    },
+  ];
+
+  return escopo === "recuperadas"
+    ? [sharedDefinition, ...recuperadasDefinitions]
+    : [sharedDefinition, ...recebidasDefinitions];
 }
 
 export class ContraprestacoesReportFactory {
   async buildReports(
     rows: ProcessedRecebidaRow[],
     competencia: Competencia,
+    escopo: ContraprestacoesScope,
   ): Promise<GeneratedWorkbook[]> {
-    const token = competenciaToken(competencia);
-    const recuperadas = rows.filter((row) => row.grupo === "RECUPERADA");
-    const recebidas = rows.filter((row) => row.grupo === "RECEBIDA");
-    const dinheiroRecebidas = recebidas.filter(
-      (row) => normalizedTipoRecebimento(row) === "DINHEIRO" && normalizedLote(row) !== "DEVOLUCAO",
-    );
-    const caixinha = takeRowsUntilNearTarget(dinheiroRecebidas, 1000);
-    const caixinhaKeys = new Set(caixinha.map((row) => row.linhaOrigem));
-    const agenteRecebedor = dinheiroRecebidas.filter((row) => !caixinhaKeys.has(row.linhaOrigem));
-
-    const definitions: WorkbookDefinition[] = [
-      {
-        fileName: `BASE RECEBIDAS ${token} - Tratada.xlsx`,
-        mode: "single",
-        rows,
-        columns: columnsBaseTratada(),
-      },
-      {
-        fileName: `Mensalidade Recuperados ${token} - Boleto.xlsx`,
-        mode: "split",
-        rows: recuperadas.filter((row) => BOLETO_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: commonColumnsBoletoRecovered(),
-      },
-      {
-        fileName: `Mensalidade Recuperados ${token} - Cartao de credito.xlsx`,
-        mode: "split",
-        rows: recuperadas.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: columnsCard(31, CARD_CREDIT_FEE),
-      },
-      {
-        fileName: `Mensalidade Recuperados ${token} - Cartao de debito.xlsx`,
-        mode: "split",
-        rows: recuperadas.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: columnsCard(1, CARD_DEBIT_FEE),
-      },
-      {
-        fileName: `Mensalidade Recuperados ${token} - Dinheiro - Caixinha.xlsx`,
-        mode: "split",
-        rows: recuperadas.filter((row) => normalizedTipoRecebimento(row) === "DINHEIRO"),
-        columns: columnsRecoveredCash(),
-      },
-      {
-        fileName: `Mensalidade Recuperados ${token} - Enel.xlsx`,
-        mode: "single",
-        rows: recuperadas.filter(
-          (row) => ENEL_TYPES.has(normalizedTipoRecebimento(row)) && row.pessoaTipo === "PF",
-        ),
-        columns: columnsEnel(competencia),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Boleto.xlsx`,
-        mode: "split",
-        rows: recebidas.filter(
-          (row) =>
-            BOLETO_TYPES.has(normalizedTipoRecebimento(row)) && normalizedLote(row) !== "DEVOLUCAO",
-        ),
-        columns: commonColumnsBoletoReceived(),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Cartao de credito.xlsx`,
-        mode: "split",
-        rows: recebidas.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: columnsCard(31, CARD_CREDIT_FEE),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Cartao de debito.xlsx`,
-        mode: "split",
-        rows: recebidas.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: columnsCard(1, CARD_DEBIT_FEE),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Enel.xlsx`,
-        mode: "single",
-        rows: recebidas.filter(
-          (row) => ENEL_TYPES.has(normalizedTipoRecebimento(row)) && row.pessoaTipo === "PF",
-        ),
-        columns: columnsEnel(competencia),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Dinheiro - Caixinha.xlsx`,
-        mode: "split",
-        rows: caixinha,
-        columns: columnsReceivedCash(competencia, "Caixinha"),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Agente recebedor.xlsx`,
-        mode: "split",
-        rows: agenteRecebedor,
-        columns: columnsReceivedCash(competencia, "Agente Recebedor - Banco do Brasil"),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Devolucao de Mensalidade.xlsx`,
-        mode: "single",
-        rows: recebidas.filter((row) => normalizedLote(row) === "DEVOLUCAO"),
-        columns: columnsDevolucao(),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - Debito em Conta.xlsx`,
-        mode: "single",
-        rows: recebidas.filter((row) => normalizedTipoRecebimento(row) === "DEBITO EM CONTA BB"),
-        columns: columnsDebitoEmConta(),
-      },
-      {
-        fileName: `Mensalidade Recebida ${token} - PIX Recorrente.xlsx`,
-        mode: "split",
-        rows: recebidas.filter((row) => PIX_RECORRENTE_TYPES.has(normalizedTipoRecebimento(row))),
-        columns: columnsPixRecorrente(),
-      },
-    ];
-
+    const definitions = buildWorkbookDefinitions(rows, competencia, escopo);
     const workbooks: GeneratedWorkbook[] = [];
     for (const definition of definitions) {
       workbooks.push(await buildWorkbook(definition));

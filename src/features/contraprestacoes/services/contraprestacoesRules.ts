@@ -1,14 +1,11 @@
 import {
+  ContraprestacoesScope,
   ContraprestacoesSummary,
   ProcessedRecebidaRow,
   RecebidaRow,
 } from "@/features/contraprestacoes/domain/types";
 import { Competencia } from "@/features/eventos/domain/types";
-import { competenciaToString, lastDayOfMonth, normalizeText } from "@/features/eventos/services/utils";
-
-function exactText(value: string): string {
-  return value.trim();
-}
+import { competenciaToString, normalizeText } from "@/features/eventos/services/utils";
 
 function isOrtoText(value: string): boolean {
   const normalized = normalizeText(value);
@@ -57,15 +54,20 @@ function cloneRow(row: RecebidaRow): RecebidaRow {
   };
 }
 
-function shouldDropByEmissionDate(row: RecebidaRow, competenciaLastDay: Date): boolean {
-  if (!row.dtEmissao) return false;
-  return row.dtEmissao.getTime() > competenciaLastDay.getTime();
-}
-
 function normalizeDinheiro(row: RecebidaRow, observations: string[]): void {
   row.tipoPagamento = "BANCO DO BRASIL CLINICO";
   row.tipoRecebimento = "DINHEIRO";
   observations.push("Tipo normalizado para DINHEIRO/BANCO DO BRASIL CLINICO");
+}
+
+function normalizeTipoRecebimentoDinheiro(row: RecebidaRow, observations: string[]): void {
+  row.tipoRecebimento = "DINHEIRO";
+  observations.push("Tipo recebimento normalizado para DINHEIRO");
+}
+
+function markDevolucao(row: RecebidaRow, observations: string[]): void {
+  row.loteNf = "DEVOLUCAO";
+  observations.push("Lote vazio convertido para DEVOLUCAO");
 }
 
 function fillLoteAndNfFromParcela(row: RecebidaRow, observations: string[]): void {
@@ -80,48 +82,43 @@ export function applyRecebidasRules(
   canceladasParcelas: Set<string>,
   competencia: Competencia,
 ): ProcessedRecebidaRow[] {
+  void competencia;
+
   const processed: ProcessedRecebidaRow[] = [];
-  const competenciaLastDay = lastDayOfMonth(competencia);
 
   for (const sourceRow of sourceRows) {
     const row = cloneRow(sourceRow);
     const observations: string[] = [];
     const loteOriginalVazio = isEmpty(row.loteNf);
     const nfOriginalVazio = isEmpty(row.nf);
-
-    if (shouldDropByEmissionDate(row, competenciaLastDay)) continue;
-
-    if (isParticular(row.tipoParcela)) {
-      if (isEmpty(row.loteNf)) continue;
-      normalizeDinheiro(row, observations);
-    }
+    let devolucaoMensalidade = false;
 
     const tipoRecebimentoOrto = isOrtoText(row.tipoRecebimento);
     const tipoPagamentoOrto = isOrtoText(row.tipoPagamento);
 
-    if (tipoRecebimentoOrto && tipoPagamentoOrto) {
-      if (isEmpty(row.loteNf)) continue;
+    if (isParticular(row.tipoParcela)) {
+      if (loteOriginalVazio) continue;
       normalizeDinheiro(row, observations);
-    }
-
-    if (tipoPagamentoOrto && isDinheiro(row.tipoRecebimento)) {
-      if (isEmpty(row.loteNf)) continue;
+    } else if (tipoRecebimentoOrto && tipoPagamentoOrto) {
+      if (loteOriginalVazio) continue;
       normalizeDinheiro(row, observations);
-    }
-
-    if (tipoPagamentoOrto && !tipoRecebimentoOrto) {
-      if (isEmpty(row.loteNf)) {
-        row.loteNf = "DEVOLUCAO";
-        observations.push("Lote vazio convertido para DEVOLUCAO");
+    } else if (tipoPagamentoOrto && isDinheiro(row.tipoRecebimento)) {
+      if (loteOriginalVazio) continue;
+      normalizeDinheiro(row, observations);
+    } else if (tipoPagamentoOrto && !tipoRecebimentoOrto) {
+      if (loteOriginalVazio) {
+        markDevolucao(row, observations);
+        devolucaoMensalidade = true;
       } else {
         normalizeDinheiro(row, observations);
       }
+    } else if (tipoRecebimentoOrto && !tipoPagamentoOrto) {
+      if (loteOriginalVazio) continue;
+      normalizeTipoRecebimentoDinheiro(row, observations);
     }
 
-    if (tipoRecebimentoOrto && !tipoPagamentoOrto) {
-      if (isEmpty(row.loteNf)) continue;
-      row.tipoRecebimento = "DINHEIRO";
-      observations.push("Tipo recebimento normalizado para DINHEIRO");
+    if (isEmpty(row.loteNf)) {
+      markDevolucao(row, observations);
     }
 
     if (isGrupoOdontoart(row.grupoEmpresa)) {
@@ -142,18 +139,14 @@ export function applyRecebidasRules(
       observations.push("Tipo pagamento GOVERNO DO ESTADO mapeado para BRADESCO");
     }
 
-    if (isEmpty(row.loteNf)) {
-      row.loteNf = "DEVOLUCAO";
-      observations.push("Lote vazio convertido para DEVOLUCAO");
-    }
-
-    const parcelaKey = exactText(row.parcela);
+    const parcelaKey = row.parcela.trim();
     const recuperada = parcelaKey.length > 0 && canceladasParcelas.has(parcelaKey);
 
     processed.push({
       ...row,
       recuperada,
       grupo: recuperada ? "RECUPERADA" : "RECEBIDA",
+      devolucaoMensalidade,
       observacoes: observations,
     });
   }
@@ -162,17 +155,19 @@ export function applyRecebidasRules(
 }
 
 export function buildContraprestacoesSummary(
+  escopo: ContraprestacoesScope,
   processedRows: ProcessedRecebidaRow[],
-  entradaRecebidas: number,
+  entradaBase: number,
   competencia: Competencia,
 ): ContraprestacoesSummary {
   const recuperadas = processedRows.filter((row) => row.grupo === "RECUPERADA");
   const recebidas = processedRows.filter((row) => row.grupo === "RECEBIDA");
-  const devolucoes = processedRows.filter((row) => normalizeText(row.loteNf) === "DEVOLUCAO");
+  const devolucoes = processedRows.filter((row) => row.devolucaoMensalidade);
 
   return {
+    escopo,
     competencia: competenciaToString(competencia),
-    entradaRecebidas,
+    entradaBase,
     registrosTratados: processedRows.length,
     recuperadas: recuperadas.length,
     recebidas: recebidas.length,

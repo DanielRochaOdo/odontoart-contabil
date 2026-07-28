@@ -113,6 +113,11 @@ function normalizeHeader(value: string): string {
   return normalizeText(value).replace(/[^\w]/g, "");
 }
 
+function isDecorativeReportRow(worksheet: ExcelJS.Worksheet, rowNumber: number): boolean {
+  const firstCell = normalizeText(coerceString(worksheet.getRow(rowNumber).getCell(1).value));
+  return firstCell.startsWith("RELATORIO FATURADO") && firstCell.includes("PERIODO");
+}
+
 function readHeaderMap(worksheet: ExcelJS.Worksheet, rowNumber: number): Map<string, number> {
   const headerMap = new Map<string, number>();
   const row = worksheet.getRow(rowNumber);
@@ -140,6 +145,8 @@ function resolveSourceLayout(worksheet: ExcelJS.Worksheet): SourceLayout | null 
     rowNumber <= Math.min(HEADER_SCAN_LIMIT, worksheet.rowCount);
     rowNumber += 1
   ) {
+    if (isDecorativeReportRow(worksheet, rowNumber)) continue;
+
     const headerMap = readHeaderMap(worksheet, rowNumber);
     const codigoCol = findColumn(headerMap, ["Codigo", "Código"]);
     const nomeCol = findColumn(headerMap, ["Nome", "Nome Fantasia"]);

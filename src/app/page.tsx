@@ -42,8 +42,9 @@ interface ProcessSummary {
 }
 
 interface ContraprestacoesSummary {
+  escopo: "recebidas" | "recuperadas";
   competencia: string;
-  entradaRecebidas: number;
+  entradaBase: number;
   registrosTratados: number;
   recuperadas: number;
   recebidas: number;
@@ -115,7 +116,7 @@ interface CanceladasProcessSummary {
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 type Module = "eventos" | "relatorios" | "contraprestacoes";
-type ContraprestacoesModule = "canceladas" | "recebidasRecuperadas" | "conferencia";
+type ContraprestacoesModule = "canceladas" | "recebidas" | "recuperadas" | "conferencia";
 type ReportsState = "idle" | "loading" | "ready" | "error";
 type CanceladasSortField =
   | "competencia"
@@ -266,7 +267,7 @@ async function detectCompetenciaLocally(
 export default function Home() {
   const [activeModule, setActiveModule] = useState<Module>("eventos");
   const [activeContraprestacoesModule, setActiveContraprestacoesModule] =
-    useState<ContraprestacoesModule>("recebidasRecuperadas");
+    useState<ContraprestacoesModule>("recebidas");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [contraprestacoesMenuOpen, setContraprestacoesMenuOpen] = useState(true);
   const [competencia, setCompetencia] = useState(() => currentMonth());
@@ -278,10 +279,17 @@ export default function Home() {
   const [competenciaHint, setCompetenciaHint] = useState("");
   const detectRequestRef = useRef(0);
   const [recebidasFile, setRecebidasFile] = useState<File | null>(null);
-  const [contrapStatus, setContrapStatus] = useState<SubmitState>("idle");
-  const [contrapErrorMessage, setContrapErrorMessage] = useState("");
-  const [contrapSummary, setContrapSummary] = useState<ContraprestacoesSummary | null>(null);
-  const [contrapCompetenciaHint, setContrapCompetenciaHint] = useState("");
+  const [recebidasStatus, setRecebidasStatus] = useState<SubmitState>("idle");
+  const [recebidasErrorMessage, setRecebidasErrorMessage] = useState("");
+  const [recebidasSummary, setRecebidasSummary] = useState<ContraprestacoesSummary | null>(null);
+  const [recebidasCompetenciaHint, setRecebidasCompetenciaHint] = useState("");
+  const [recebidasProgress, setRecebidasProgress] = useState<ActionProgress>(createIdleProgress);
+  const [recuperadasFile, setRecuperadasFile] = useState<File | null>(null);
+  const [recuperadasStatus, setRecuperadasStatus] = useState<SubmitState>("idle");
+  const [recuperadasErrorMessage, setRecuperadasErrorMessage] = useState("");
+  const [recuperadasSummary, setRecuperadasSummary] = useState<ContraprestacoesSummary | null>(null);
+  const [recuperadasCompetenciaHint, setRecuperadasCompetenciaHint] = useState("");
+  const [recuperadasProgress, setRecuperadasProgress] = useState<ActionProgress>(createIdleProgress);
 
   const [reportRows, setReportRows] = useState<ReportRow[]>([]);
   const [reportsState, setReportsState] = useState<ReportsState>("idle");
@@ -315,7 +323,6 @@ export default function Home() {
   const [canceladasProcessSummary, setCanceladasProcessSummary] =
     useState<CanceladasProcessSummary | null>(null);
   const [eventosProgress, setEventosProgress] = useState<ActionProgress>(createIdleProgress);
-  const [contrapProgress, setContrapProgress] = useState<ActionProgress>(createIdleProgress);
   const [canceladasProcessProgress, setCanceladasProcessProgress] =
     useState<ActionProgress>(createIdleProgress);
 
@@ -323,9 +330,13 @@ export default function Home() {
     () => Boolean(knownFile && liquidFile && competencia) && status !== "loading",
     [knownFile, liquidFile, competencia, status],
   );
-  const canSubmitContraprestacoes = useMemo(
-    () => Boolean(recebidasFile && competencia) && contrapStatus !== "loading",
-    [recebidasFile, competencia, contrapStatus],
+  const canSubmitRecebidas = useMemo(
+    () => Boolean(recebidasFile && competencia) && recebidasStatus !== "loading",
+    [recebidasFile, competencia, recebidasStatus],
+  );
+  const canSubmitRecuperadas = useMemo(
+    () => Boolean(recuperadasFile && competencia) && recuperadasStatus !== "loading",
+    [recuperadasFile, competencia, recuperadasStatus],
   );
 
   async function detectCompetenciaFromFile(
@@ -375,7 +386,7 @@ export default function Home() {
     const file = event.target.files?.[0] ?? null;
     setRecebidasFile(file);
     if (!file) {
-      setContrapCompetenciaHint("");
+      setRecebidasCompetenciaHint("");
       return;
     }
 
@@ -388,7 +399,7 @@ export default function Home() {
 
         if (detected.competencia) {
           setCompetencia(detected.competencia);
-          setContrapCompetenciaHint(
+          setRecebidasCompetenciaHint(
             `Competencia identificada localmente em Base Recebidas: ${detected.competencia}.`,
           );
           return;
@@ -397,12 +408,50 @@ export default function Home() {
         const fallback = parseCompetencia(undefined);
         const fallbackValue = `${fallback.ano}-${String(fallback.mes).padStart(2, "0")}`;
         setCompetencia(fallbackValue);
-        setContrapCompetenciaHint(
+        setRecebidasCompetenciaHint(
           detected.message ??
             "Nao conseguimos identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
         );
       } catch {
-        setContrapCompetenciaHint(
+        setRecebidasCompetenciaHint(
+          "Nao foi possivel identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+        );
+      }
+    })();
+  }
+
+  function handleRecuperadasChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setRecuperadasFile(file);
+    if (!file) {
+      setRecuperadasCompetenciaHint("");
+      return;
+    }
+
+    void (async () => {
+      try {
+        const [{ parseCompetencia }] = await Promise.all([
+          import("@/features/eventos/services/utils"),
+        ]);
+        const detected = await detectCompetenciaLocally(file);
+
+        if (detected.competencia) {
+          setCompetencia(detected.competencia);
+          setRecuperadasCompetenciaHint(
+            `Competencia identificada localmente em Base Recuperadas: ${detected.competencia}.`,
+          );
+          return;
+        }
+
+        const fallback = parseCompetencia(undefined);
+        const fallbackValue = `${fallback.ano}-${String(fallback.mes).padStart(2, "0")}`;
+        setCompetencia(fallbackValue);
+        setRecuperadasCompetenciaHint(
+          detected.message ??
+            "Nao conseguimos identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
+        );
+      } catch {
+        setRecuperadasCompetenciaHint(
           "Nao foi possivel identificar a competencia automaticamente. Informe manualmente no campo Competencia.",
         );
       }
@@ -507,27 +556,44 @@ export default function Home() {
     window.setTimeout(() => setEventosProgress(createIdleProgress()), 1800);
   }
 
-  async function handleContraprestacoesSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!recebidasFile) return;
+  async function runContraprestacoesFlow(params: {
+    escopo: "recebidas" | "recuperadas";
+    file: File;
+    origemLabel: string;
+    setStatus: Dispatch<SetStateAction<SubmitState>>;
+    setError: Dispatch<SetStateAction<string>>;
+    setSummary: Dispatch<SetStateAction<ContraprestacoesSummary | null>>;
+    setHint: Dispatch<SetStateAction<string>>;
+    setProgress: Dispatch<SetStateAction<ActionProgress>>;
+  }) {
+    const {
+      escopo,
+      file,
+      origemLabel,
+      setStatus,
+      setError,
+      setSummary,
+      setHint,
+      setProgress,
+    } = params;
 
-    setContrapStatus("loading");
-    setContrapProgress({
+    setStatus("loading");
+    setProgress({
       active: true,
       value: 10,
       label: "Abrindo planilha",
-      detail: `Lendo ${recebidasFile.name} para identificar competencia e preparar o fluxo.`,
+      detail: `Lendo ${file.name} para identificar competencia e preparar o fluxo.`,
     });
-    setContrapErrorMessage("");
-    setContrapSummary(null);
+    setError("");
+    setSummary(null);
     await flushProgressFrame();
 
     try {
-      setContrapProgress({
+      setProgress({
         active: true,
         value: 24,
         label: "Carregando motor local",
-        detail: "Preparando o processamento local de Recebidas e Recuperadas.",
+        detail: `Preparando o processamento local de ${origemLabel}.`,
       });
       await flushProgressFrame();
 
@@ -535,7 +601,7 @@ export default function Home() {
         "@/features/contraprestacoes/services/ContraprestacoesBrowserProcessor"
       );
 
-      setContrapProgress({
+      setProgress({
         active: true,
         value: 48,
         label: "Processando base",
@@ -544,20 +610,21 @@ export default function Home() {
       await flushProgressFrame();
 
       const result = await processContraprestacoesInBrowser({
+        escopo,
         competenciaRaw: competencia,
-        recebidasFile,
+        baseFile: file,
       });
 
       if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
         setCompetencia(result.competenciaDetectada);
-        setContrapCompetenciaHint(
-          `Competencia confirmada localmente em Base Recebidas: ${result.competenciaDetectada}.`,
+        setHint(
+          `Competencia confirmada localmente em ${origemLabel}: ${result.competenciaDetectada}.`,
         );
       }
 
-      setContrapSummary(result.summary);
+      setSummary(result.summary);
 
-      setContrapProgress({
+      setProgress({
         active: true,
         value: 82,
         label: "Gerando pacote",
@@ -570,21 +637,53 @@ export default function Home() {
         result.fileName,
       );
 
-      setContrapProgress({
+      setProgress({
         active: true,
         value: 100,
         label: "Concluido",
-        detail: "Pacote de Recebidas e Recuperadas pronto para download.",
+        detail: `Pacote de ${origemLabel} pronto para download.`,
       });
-      setContrapStatus("success");
+      setStatus("success");
     } catch (error) {
-      setContrapStatus("error");
-      setContrapProgress(createIdleProgress());
-      setContrapErrorMessage(error instanceof Error ? error.message : DEFAULT_CONTRAP_ERROR);
+      setStatus("error");
+      setProgress(createIdleProgress());
+      setError(error instanceof Error ? error.message : DEFAULT_CONTRAP_ERROR);
       return;
     }
 
-    window.setTimeout(() => setContrapProgress(createIdleProgress()), 1800);
+    window.setTimeout(() => setProgress(createIdleProgress()), 1800);
+  }
+
+  async function handleRecebidasSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!recebidasFile) return;
+
+    await runContraprestacoesFlow({
+      escopo: "recebidas",
+      file: recebidasFile,
+      origemLabel: "Base Recebidas",
+      setStatus: setRecebidasStatus,
+      setError: setRecebidasErrorMessage,
+      setSummary: setRecebidasSummary,
+      setHint: setRecebidasCompetenciaHint,
+      setProgress: setRecebidasProgress,
+    });
+  }
+
+  async function handleRecuperadasSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!recuperadasFile) return;
+
+    await runContraprestacoesFlow({
+      escopo: "recuperadas",
+      file: recuperadasFile,
+      origemLabel: "Base Recuperadas",
+      setStatus: setRecuperadasStatus,
+      setError: setRecuperadasErrorMessage,
+      setSummary: setRecuperadasSummary,
+      setHint: setRecuperadasCompetenciaHint,
+      setProgress: setRecuperadasProgress,
+    });
   }
 
   const loadReports = useCallback(async () => {
@@ -1126,24 +1225,47 @@ export default function Home() {
     );
   }
 
-  function renderContraprestacoesRecebidasRecuperadas() {
+  function renderContraprestacoesBase(params: {
+    titulo: string;
+    descricao: string;
+    nota: string;
+    origemLabel: string;
+    hint: string;
+    status: SubmitState;
+    errorMessage: string;
+    summary: ContraprestacoesSummary | null;
+    canSubmit: boolean;
+    onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+    onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+    progress: ActionProgress;
+    successLabel: string;
+  }) {
+    const {
+      titulo,
+      descricao,
+      nota,
+      origemLabel,
+      hint,
+      status,
+      errorMessage,
+      summary,
+      canSubmit,
+      onSubmit,
+      onFileChange,
+      progress,
+      successLabel,
+    } = params;
+
     return (
       <>
         <header className={styles.header}>
-          <h1>Contraprestacoes Recebidas e Recuperadas</h1>
-          <p>
-            Fluxo integrado para tratar a base de Recebidas, cruzar parcelas com Canceladas e
-            gerar os relatorios mensais de Recebidas e Recuperadas em pacote unico.
-          </p>
-          <p className={styles.ruleNote}>
-            O processamento aplica as tratativas operacionais da base, marca parcelas
-            recuperadas pelo historico de Canceladas e inclui a base tratada no pacote para
-            conferencia.
-          </p>
+          <h1>{titulo}</h1>
+          <p>{descricao}</p>
+          <p className={styles.ruleNote}>{nota}</p>
         </header>
 
         <section className={styles.card}>
-          <form onSubmit={handleContraprestacoesSubmit} className={styles.form}>
+          <form onSubmit={onSubmit} className={styles.form}>
             <div className={styles.grid}>
               <label className={styles.field}>
                 <span>Competencia</span>
@@ -1153,17 +1275,15 @@ export default function Home() {
                   onChange={(event) => setCompetencia(event.target.value)}
                   required
                 />
-                {contrapCompetenciaHint && (
-                  <small className={styles.helper}>{contrapCompetenciaHint}</small>
-                )}
+                {hint && <small className={styles.helper}>{hint}</small>}
               </label>
 
               <label className={styles.field}>
-                <span>Base Recebidas (.xlsx)</span>
+                <span>{origemLabel} (.xlsx)</span>
                 <input
                   type="file"
                   accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={handleEscrituracaoChange}
+                  onChange={onFileChange}
                   required
                 />
               </label>
@@ -1172,48 +1292,48 @@ export default function Home() {
             <div className={styles.actions}>
               <button
                 type="submit"
-                disabled={!canSubmitContraprestacoes}
+                disabled={!canSubmit}
                 className={styles.primaryBtn}
               >
-                {contrapStatus === "loading" ? (
+                {status === "loading" ? (
                   <LoaderCircle size={15} className={styles.spin} />
                 ) : (
                   <Download size={15} />
                 )}
-                <span>Executar Fluxo Recebidas / Recuperadas</span>
+                <span>{successLabel}</span>
               </button>
-              {renderActionProgress(contrapProgress)}
+              {renderActionProgress(progress)}
             </div>
           </form>
         </section>
 
-        {(contrapStatus === "error" || contrapStatus === "success" || contrapSummary) && (
+        {(status === "error" || status === "success" || summary) && (
           <section className={styles.feedback}>
-            {contrapStatus === "error" && (
+            {status === "error" && (
               <p className={styles.errorMsg}>
                 <AlertTriangle size={16} />
-                {contrapErrorMessage}
+                {errorMessage}
               </p>
             )}
 
-            {contrapStatus === "success" && (
+            {status === "success" && (
               <p className={styles.successMsg}>
                 <CheckCircle2 size={16} />
                 Processamento concluido. O download do pacote de relatorios foi iniciado.
               </p>
             )}
 
-            {contrapSummary && (
+            {summary && (
               <div className={styles.summary}>
-                <h2>Resumo da Competencia {contrapSummary.competencia}</h2>
+                <h2>Resumo da Competencia {summary.competencia}</h2>
                 <ul>
-                  <li>Entradas Recebidas: {contrapSummary.entradaRecebidas}</li>
-                  <li>Registros tratados: {contrapSummary.registrosTratados}</li>
-                  <li>Parcelas Recuperadas: {contrapSummary.recuperadas}</li>
-                  <li>Parcelas Recebidas: {contrapSummary.recebidas}</li>
-                  <li>Devolucoes marcadas: {contrapSummary.devolucoes}</li>
-                  <li>Arquivos gerados: {contrapSummary.arquivosGerados}</li>
-                  <li>Total recebido na base: {formatCurrency(contrapSummary.totalValorPagamento)}</li>
+                  <li>Entradas na base: {summary.entradaBase}</li>
+                  <li>Registros tratados: {summary.registrosTratados}</li>
+                  <li>Parcelas Recuperadas: {summary.recuperadas}</li>
+                  <li>Parcelas Recebidas: {summary.recebidas}</li>
+                  <li>Devolucoes marcadas: {summary.devolucoes}</li>
+                  <li>Arquivos gerados: {summary.arquivosGerados}</li>
+                  <li>Total recebido na base: {formatCurrency(summary.totalValorPagamento)}</li>
                 </ul>
               </div>
             )}
@@ -1221,6 +1341,46 @@ export default function Home() {
         )}
       </>
     );
+  }
+
+  function renderContraprestacoesRecebidas() {
+    return renderContraprestacoesBase({
+      titulo: "Contraprestacoes Recebidas",
+      descricao:
+        "Modulo dedicado ao tratamento da base de Recebidas e geracao exclusiva dos relatorios mensais de recebidas.",
+      nota:
+        "O processamento aplica as tratativas operacionais da base, cruza parcelas com Canceladas para manter a mesma regra de comunicacao e exporta apenas os arquivos do escopo de Recebidas.",
+      origemLabel: "Base Recebidas",
+      hint: recebidasCompetenciaHint,
+      status: recebidasStatus,
+      errorMessage: recebidasErrorMessage,
+      summary: recebidasSummary,
+      canSubmit: canSubmitRecebidas,
+      onSubmit: handleRecebidasSubmit,
+      onFileChange: handleEscrituracaoChange,
+      progress: recebidasProgress,
+      successLabel: "Executar Fluxo Recebidas",
+    });
+  }
+
+  function renderContraprestacoesRecuperadas() {
+    return renderContraprestacoesBase({
+      titulo: "Contraprestacoes Recuperadas",
+      descricao:
+        "Modulo dedicado ao tratamento da base de Recuperadas e geracao exclusiva dos relatorios mensais de recuperadas.",
+      nota:
+        "O processamento preserva o cruzamento com Canceladas e exporta apenas a base tratada e os arquivos finais do escopo de Recuperadas.",
+      origemLabel: "Base Recuperadas",
+      hint: recuperadasCompetenciaHint,
+      status: recuperadasStatus,
+      errorMessage: recuperadasErrorMessage,
+      summary: recuperadasSummary,
+      canSubmit: canSubmitRecuperadas,
+      onSubmit: handleRecuperadasSubmit,
+      onFileChange: handleRecuperadasChange,
+      progress: recuperadasProgress,
+      successLabel: "Executar Fluxo Recuperadas",
+    });
   }
 
   function renderContraprestacoesCanceladas() {
@@ -1306,7 +1466,7 @@ export default function Home() {
             className={styles.collapseTrigger}
             onClick={() => setCanceladasFiltersOpen((value) => !value)}
           >
-            <span>Filtros de Ano e Mes por Vencimento</span>
+            <span>Filtros de Ano e Mes por Competencia</span>
             <ChevronDown
               size={14}
               className={`${styles.menuCaret} ${canceladasFiltersOpen ? styles.menuCaretOpen : ""}`}
@@ -1600,8 +1760,9 @@ export default function Home() {
 
   function renderContraprestacoes() {
     if (activeContraprestacoesModule === "canceladas") return renderContraprestacoesCanceladas();
-    if (activeContraprestacoesModule === "conferencia") return renderContraprestacoesConferencia();
-    return renderContraprestacoesRecebidasRecuperadas();
+    if (activeContraprestacoesModule === "recebidas") return renderContraprestacoesRecebidas();
+    if (activeContraprestacoesModule === "recuperadas") return renderContraprestacoesRecuperadas();
+    return renderContraprestacoesConferencia();
   }
 
   function renderRelatorios() {
@@ -1802,13 +1963,19 @@ export default function Home() {
               <li>Navegue pelos resultados com paginação de 100 registros por pagina.</li>
             </ul>
 
-            <h3>3. Contraprestacoes Recebidas e Recuperadas</h3>
+            <h3>3. Contraprestacoes Recebidas</h3>
             <p>
-              Informe a competencia, envie a base de Recebidas e execute o fluxo integrado para
-              classificar Recuperadas e gerar a saida consolidada.
+              Informe a competencia, envie a base de Recebidas e execute o fluxo dedicado para
+              gerar apenas os relatorios de recebidas.
             </p>
 
-            <h3>4. Relatorios</h3>
+            <h3>4. Contraprestacoes Recuperadas</h3>
+            <p>
+              Informe a competencia, envie a base de Recuperadas e execute o fluxo dedicado para
+              gerar apenas os relatorios de recuperadas.
+            </p>
+
+            <h3>5. Relatorios</h3>
             <p>
               Consulte o historico de processamentos por competencia e use Ver detalhes para
               auditoria e conferencia.
@@ -1912,17 +2079,33 @@ export default function Home() {
                   type="button"
                   className={`${styles.subMenuItem} ${
                     activeModule === "contraprestacoes" &&
-                    activeContraprestacoesModule === "recebidasRecuperadas"
+                    activeContraprestacoesModule === "recebidas"
                       ? styles.activeSubMenuItem
                       : ""
                   }`}
                   onClick={() => {
                     setActiveModule("contraprestacoes");
-                    setActiveContraprestacoesModule("recebidasRecuperadas");
+                    setActiveContraprestacoesModule("recebidas");
                     if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
                   }}
                 >
-                  Recebidas / Recuperadas
+                  Recebidas
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.subMenuItem} ${
+                    activeModule === "contraprestacoes" &&
+                    activeContraprestacoesModule === "recuperadas"
+                      ? styles.activeSubMenuItem
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setActiveModule("contraprestacoes");
+                    setActiveContraprestacoesModule("recuperadas");
+                    if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
+                  }}
+                >
+                  Recuperadas
                 </button>
                 <button
                   type="button"
