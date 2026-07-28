@@ -1,6 +1,9 @@
 import JSZip from "jszip";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
-import { ContraprestacoesSummary } from "@/features/contraprestacoes/domain/types";
+import {
+  ContraprestacoesScope,
+  ContraprestacoesSummary,
+} from "@/features/contraprestacoes/domain/types";
 import { Competencia } from "@/features/eventos/domain/types";
 import { CompetenciaDetector } from "@/features/eventos/services/CompetenciaDetector";
 import { parseCompetencia } from "@/features/eventos/services/utils";
@@ -12,8 +15,9 @@ import {
 } from "@/features/contraprestacoes/services/contraprestacoesRules";
 
 interface BrowserProcessInput {
+  escopo: ContraprestacoesScope;
   competenciaRaw: string | null | undefined;
-  recebidasFile: File;
+  baseFile: File;
 }
 
 interface BrowserProcessOutput {
@@ -58,30 +62,34 @@ async function fetchCanceladasParcelas(): Promise<Set<string>> {
   return new Set((payload?.parcelas ?? []).map((item) => item.trim()).filter(Boolean));
 }
 
+function labelForScope(escopo: ContraprestacoesScope): string {
+  return escopo === "recuperadas" ? "Recuperadas" : "Recebidas";
+}
+
 export async function processContraprestacoesInBrowser(
   input: BrowserProcessInput,
 ): Promise<BrowserProcessOutput> {
-  const recebidasBuffer = new Uint8Array(await input.recebidasFile.arrayBuffer());
+  const baseBuffer = new Uint8Array(await input.baseFile.arrayBuffer());
   const { competencia, detectada } = await resolveCompetencia(
     input.competenciaRaw,
-    recebidasBuffer,
-    input.recebidasFile.name,
+    baseBuffer,
+    input.baseFile.name,
   );
 
   const parser = new RecebidasWorkbookParser();
   const reportFactory = new ContraprestacoesReportFactory();
-  const rows = await parser.parse(recebidasBuffer);
+  const rows = await parser.parse(baseBuffer);
   const canceladasParcelas = await fetchCanceladasParcelas();
   const processedRows = applyRecebidasRules(rows, canceladasParcelas, competencia);
 
   if (processedRows.length === 0) {
     throw new ContraprestacoesError(
-      "Base de recebidas sem registros apos tratamento.",
-      "Nenhum registro permaneceu apos aplicar as regras de tratamento de Recebidas.",
+      `Base de ${labelForScope(input.escopo).toLowerCase()} sem registros apos tratamento.`,
+      `Nenhum registro permaneceu apos aplicar as regras de tratamento de ${labelForScope(input.escopo)}.`,
     );
   }
 
-  const reports = await reportFactory.buildReports(processedRows, competencia);
+  const reports = await reportFactory.buildReports(processedRows, competencia, input.escopo);
   const zip = new JSZip();
   reports.forEach((report) => {
     zip.file(report.fileName, report.buffer);
@@ -89,12 +97,12 @@ export async function processContraprestacoesInBrowser(
 
   const fileBuffer = await zip.generateAsync({ type: "uint8array" });
   const summary = {
-    ...buildContraprestacoesSummary(processedRows, rows.length, competencia),
+    ...buildContraprestacoesSummary(input.escopo, processedRows, rows.length, competencia),
     arquivosGerados: reports.length,
   };
 
   return {
-    fileName: `${String(competencia.mes).padStart(2, "0")}.${competencia.ano} Contraprestacoes - Recebidas e Recuperadas.zip`,
+    fileName: `${String(competencia.mes).padStart(2, "0")}.${competencia.ano} Contraprestacoes - ${labelForScope(input.escopo)}.zip`,
     fileBuffer,
     summary,
     competenciaDetectada: detectada,

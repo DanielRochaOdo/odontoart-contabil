@@ -1,5 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
+import { ContraprestacoesScope } from "@/features/contraprestacoes/domain/types";
 import { ContraprestacoesProcessor } from "@/features/contraprestacoes/services/ContraprestacoesProcessor";
 import { Competencia } from "@/features/eventos/domain/types";
 import { CompetenciaDetector } from "@/features/eventos/services/CompetenciaDetector";
@@ -14,6 +15,10 @@ function isXlsx(file: File): boolean {
 function toFriendlyMessage(error: unknown): string {
   if (error instanceof ContraprestacoesError) return error.userMessage;
   return "Nao foi possivel concluir a exportacao de contraprestacoes agora. Revise o arquivo e tente novamente.";
+}
+
+function resolveScope(value: FormDataEntryValue | null): ContraprestacoesScope {
+  return value === "recuperadas" ? "recuperadas" : "recebidas";
 }
 
 async function resolveCompetencia(
@@ -35,34 +40,36 @@ async function resolveCompetencia(
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const recebidasFile = formData.get("recebidas") ?? formData.get("escrituracao");
+    const escopo = resolveScope(formData.get("escopo"));
+    const baseFile = formData.get("base") ?? formData.get("recebidas") ?? formData.get("escrituracao");
     const competenciaRaw = formData.get("competencia");
 
-    if (!(recebidasFile instanceof File)) {
+    if (!(baseFile instanceof File)) {
       return NextResponse.json(
-        { message: "Envie o arquivo base de Recebidas para executar o fluxo de contraprestacoes." },
+        { message: "Envie o arquivo base de contraprestacoes para executar o fluxo." },
         { status: 400 },
       );
     }
 
-    if (!isXlsx(recebidasFile)) {
+    if (!isXlsx(baseFile)) {
       return NextResponse.json(
         { message: "Use arquivo no formato .xlsx para processamento de contraprestacoes." },
         { status: 400 },
       );
     }
 
-    const recebidasBuffer = Buffer.from(await recebidasFile.arrayBuffer());
+    const baseBuffer = Buffer.from(await baseFile.arrayBuffer());
     const competencia = await resolveCompetencia(
       competenciaRaw,
-      recebidasBuffer,
-      recebidasFile.name,
+      baseBuffer,
+      baseFile.name,
     );
 
     const processor = new ContraprestacoesProcessor();
     const result = await processor.process({
+      escopo,
       competencia,
-      recebidasBuffer,
+      baseBuffer,
     });
 
     const summaryHeader = Buffer.from(JSON.stringify(result.summary), "utf8").toString("base64");

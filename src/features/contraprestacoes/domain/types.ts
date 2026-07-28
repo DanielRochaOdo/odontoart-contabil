@@ -2,6 +2,23 @@ import { Competencia } from "@/features/eventos/domain/types";
 
 export type PessoaTipo = "PF" | "PJ";
 export type ContraprestacaoGrupo = "RECEBIDA" | "RECUPERADA";
+export type ContraprestacoesScope = "recebidas" | "recuperadas";
+export type ContraprestacoesReportId =
+  | "base-tratada"
+  | "recuperada-boleto"
+  | "recuperada-cartao-credito"
+  | "recuperada-cartao-debito"
+  | "recuperada-dinheiro-caixinha"
+  | "recuperada-enel"
+  | "recebida-boleto"
+  | "recebida-cartao-credito"
+  | "recebida-cartao-debito"
+  | "recebida-enel"
+  | "recebida-dinheiro-caixinha"
+  | "recebida-agente-recebedor"
+  | "recebida-devolucao"
+  | "recebida-debito-em-conta"
+  | "recebida-pix-recorrente";
 
 export interface RecebidaRow {
   linhaOrigem: number;
@@ -30,12 +47,14 @@ export interface RecebidaRow {
 export interface ProcessedRecebidaRow extends RecebidaRow {
   recuperada: boolean;
   grupo: ContraprestacaoGrupo;
+  devolucaoMensalidade: boolean;
   observacoes: string[];
 }
 
 export interface ContraprestacoesSummary {
+  escopo: ContraprestacoesScope;
   competencia: string;
-  entradaRecebidas: number;
+  entradaBase: number;
   registrosTratados: number;
   recuperadas: number;
   recebidas: number;
@@ -45,8 +64,9 @@ export interface ContraprestacoesSummary {
 }
 
 export interface ContraprestacoesProcessInput {
+  escopo: ContraprestacoesScope;
   competencia: Competencia;
-  recebidasBuffer: Uint8Array;
+  baseBuffer: Uint8Array;
 }
 
 export interface ContraprestacoesProcessOutput {

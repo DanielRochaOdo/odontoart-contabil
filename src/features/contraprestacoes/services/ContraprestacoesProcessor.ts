@@ -3,6 +3,7 @@ import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors
 import {
   ContraprestacoesProcessInput,
   ContraprestacoesProcessOutput,
+  ContraprestacoesScope,
 } from "@/features/contraprestacoes/domain/types";
 import { ContraprestacoesReportFactory } from "@/features/contraprestacoes/services/ContraprestacoesReportFactory";
 import { RecebidasWorkbookParser } from "@/features/contraprestacoes/services/RecebidasWorkbookParser";
@@ -17,29 +18,42 @@ export class ContraprestacoesProcessor {
 
   private readonly reportFactory = new ContraprestacoesReportFactory();
 
+  private labelForScope(escopo: ContraprestacoesScope): string {
+    return escopo === "recuperadas" ? "Recuperadas" : "Recebidas";
+  }
+
   async process(input: ContraprestacoesProcessInput): Promise<ContraprestacoesProcessOutput> {
-    const rows = await this.parser.parse(input.recebidasBuffer);
+    const rows = await this.parser.parse(input.baseBuffer);
     const canceladasParcelas = await fetchCanceladasParcelasFromSupabase();
     const processedRows = applyRecebidasRules(rows, canceladasParcelas, input.competencia);
 
     if (processedRows.length === 0) {
       throw new ContraprestacoesError(
-        "Base de recebidas sem registros apos tratamento.",
-        "Nenhum registro permaneceu apos aplicar as regras de tratamento de Recebidas.",
+        `Base de ${this.labelForScope(input.escopo).toLowerCase()} sem registros apos tratamento.`,
+        `Nenhum registro permaneceu apos aplicar as regras de tratamento de ${this.labelForScope(input.escopo)}.`,
       );
     }
 
-    const reports = await this.reportFactory.buildReports(processedRows, input.competencia);
+    const reports = await this.reportFactory.buildReports(
+      processedRows,
+      input.competencia,
+      input.escopo,
+    );
     const zip = new JSZip();
     reports.forEach((report) => {
       zip.file(report.fileName, report.buffer);
     });
 
     const zipBuffer = await zip.generateAsync({ type: "uint8array" });
-    const summary = buildContraprestacoesSummary(processedRows, rows.length, input.competencia);
+    const summary = buildContraprestacoesSummary(
+      input.escopo,
+      processedRows,
+      rows.length,
+      input.competencia,
+    );
 
     return {
-      fileName: `${String(input.competencia.mes).padStart(2, "0")}.${input.competencia.ano} Contraprestacoes - Recebidas e Recuperadas.zip`,
+      fileName: `${String(input.competencia.mes).padStart(2, "0")}.${input.competencia.ano} Contraprestacoes - ${this.labelForScope(input.escopo)}.zip`,
       fileBuffer: zipBuffer,
       summary: {
         ...summary,

@@ -1,0 +1,3036 @@
+﻿{
+  "competencia": "01/2026",
+  "output": {
+    "Mensalidade Recebida 01.2026 - Agente recebedor.xlsx": {
+      "onlyInSystemCount": 17,
+      "onlyInManualCount": 20,
+      "onlyInSystemSample": [
+        {
+          "key": "2833600|6265094|104.60",
+          "rows": [
+            {
+              "linha": 2174,
+              "codigo": "2833600",
+              "parcela": "6265094",
+              "recebido": 104.6,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78659",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "4964500|6273664|68.32",
+          "rows": [
+            {
+              "linha": 2267,
+              "codigo": "4964500",
+              "parcela": "6273664",
+              "recebido": 68.32,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79079",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "6693400|6265282|23.06",
+          "rows": [
+            {
+              "linha": 2347,
+              "codigo": "6693400",
+              "parcela": "6265282",
+              "recebido": 23.06,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78809",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310522062|6247452|63.45",
+          "rows": [
+            {
+              "linha": 2376,
+              "codigo": "310522062",
+              "parcela": "6247452",
+              "recebido": 63.45,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78562",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310544029|6267012|38.83",
+          "rows": [
+            {
+              "linha": 2490,
+              "codigo": "310544029",
+              "parcela": "6267012",
+              "recebido": 38.83,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78604",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310555167|6267337|57.45",
+          "rows": [
+            {
+              "linha": 2555,
+              "codigo": "310555167",
+              "parcela": "6267337",
+              "recebido": 57.45,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78605",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310572935|6247466|54.75",
+          "rows": [
+            {
+              "linha": 2687,
+              "codigo": "310572935",
+              "parcela": "6247466",
+              "recebido": 54.75,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78804",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310574662|6268258|31.62",
+          "rows": [
+            {
+              "linha": 2701,
+              "codigo": "310574662",
+              "parcela": "6268258",
+              "recebido": 31.62,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78606",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310608108|6286099|73.00",
+          "rows": [
+            {
+              "linha": 2974,
+              "codigo": "310608108",
+              "parcela": "6286099",
+              "recebido": 73,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78857",
+              "dtEmissao": "2026-01-21",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310659553|6250233|25.00",
+          "rows": [
+            {
+              "linha": 4313,
+              "codigo": "310659553",
+              "parcela": "6250233",
+              "recebido": 25,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78804",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310720371|6286361|125.00",
+          "rows": [
+            {
+              "linha": 5628,
+              "codigo": "310720371",
+              "parcela": "6286361",
+              "recebido": 125,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78952",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310724730|6262917|31.34",
+          "rows": [
+            {
+              "linha": 5699,
+              "codigo": "310724730",
+              "parcela": "6262917",
+              "recebido": 31.34,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78580",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310770402|6277047|24.42",
+          "rows": [
+            {
+              "linha": 6710,
+              "codigo": "310770402",
+              "parcela": "6277047",
+              "recebido": 24.42,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78948",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310775128|6279743|87.50",
+          "rows": [
+            {
+              "linha": 6859,
+              "codigo": "310775128",
+              "parcela": "6279743",
+              "recebido": 87.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78949",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310777825|6279761|63.50",
+          "rows": [
+            {
+              "linha": 6937,
+              "codigo": "310777825",
+              "parcela": "6279761",
+              "recebido": 63.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79081",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-28",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310829103|6286896|66.55",
+          "rows": [
+            {
+              "linha": 8825,
+              "codigo": "310829103",
+              "parcela": "6286896",
+              "recebido": 66.55,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79083",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310835295|6269000|159.50",
+          "rows": [
+            {
+              "linha": 9116,
+              "codigo": "310835295",
+              "parcela": "6269000",
+              "recebido": 159.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78745",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-15",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        }
+      ],
+      "onlyInManualSample": [
+        {
+          "key": "310942702|6229362|62.50",
+          "rows": [
+            {
+              "linha": 32742,
+              "codigo": "310942702",
+              "parcela": "6229362",
+              "recebido": 62.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310934341|6181850|63.55",
+          "rows": [
+            {
+              "linha": 32420,
+              "codigo": "310934341",
+              "parcela": "6181850",
+              "recebido": 63.55,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78802",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310953229|6244799|49.80",
+          "rows": [
+            {
+              "linha": 33140,
+              "codigo": "310953229",
+              "parcela": "6244799",
+              "recebido": 49.8,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78655",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310953229|6198619|49.80",
+          "rows": [
+            {
+              "linha": 33141,
+              "codigo": "310953229",
+              "parcela": "6198619",
+              "recebido": 49.8,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78611",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310969503|6229931|31.90",
+          "rows": [
+            {
+              "linha": 33649,
+              "codigo": "310969503",
+              "parcela": "6229931",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310970845|6154745|31.90",
+          "rows": [
+            {
+              "linha": 33726,
+              "codigo": "310970845",
+              "parcela": "6154745",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78526",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-08",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310974272|6229972|127.60",
+          "rows": [
+            {
+              "linha": 33859,
+              "codigo": "310974272",
+              "parcela": "6229972",
+              "recebido": 127.6,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78553",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310975213|6245062|31.90",
+          "rows": [
+            {
+              "linha": 33903,
+              "codigo": "310975213",
+              "parcela": "6245062",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78942",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310975213|6198890|31.90",
+          "rows": [
+            {
+              "linha": 33904,
+              "codigo": "310975213",
+              "parcela": "6198890",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78936",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "311170583|6230213|31.90",
+          "rows": [
+            {
+              "linha": 34416,
+              "codigo": "311170583",
+              "parcela": "6230213",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311170583|6180079|31.90",
+          "rows": [
+            {
+              "linha": 34417,
+              "codigo": "311170583",
+              "parcela": "6180079",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78732",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311170583|6136834|31.90",
+          "rows": [
+            {
+              "linha": 34418,
+              "codigo": "311170583",
+              "parcela": "6136834",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78729",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311196670|6309287|34.90",
+          "rows": [
+            {
+              "linha": 35116,
+              "codigo": "311196670",
+              "parcela": "6309287",
+              "recebido": 34.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoParcela": "ADESÃO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79122",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-31",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311178870|6209174|45.86",
+          "rows": [
+            {
+              "linha": 34730,
+              "codigo": "311178870",
+              "parcela": "6209174",
+              "recebido": 45.86,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78545",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311178870|6164884|45.86",
+          "rows": [
+            {
+              "linha": 34731,
+              "codigo": "311178870",
+              "parcela": "6164884",
+              "recebido": 45.86,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78528",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310982038|6224802|41.00",
+          "rows": [
+            {
+              "linha": 34173,
+              "codigo": "310982038",
+              "parcela": "6224802",
+              "recebido": 41,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78551",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310951630|6201524|51.00",
+          "rows": [
+            {
+              "linha": 33074,
+              "codigo": "310951630",
+              "parcela": "6201524",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78543",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-06",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310971247|6231582|51.00",
+          "rows": [
+            {
+              "linha": 33760,
+              "codigo": "310971247",
+              "parcela": "6231582",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78553",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "311170069|6184312|51.00",
+          "rows": [
+            {
+              "linha": 34396,
+              "codigo": "311170069",
+              "parcela": "6184312",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78538",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-06",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310944251|6224755|103.00",
+          "rows": [
+            {
+              "linha": 32813,
+              "codigo": "310944251",
+              "parcela": "6224755",
+              "recebido": 103,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79074",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Boleto.xlsx": {
+      "onlyInSystemCount": 12,
+      "onlyInManualCount": 9,
+      "onlyInSystemSample": [
+        {
+          "key": "310895597|6309044|2.50",
+          "rows": [
+            {
+              "linha": 31026,
+              "codigo": "310895597",
+              "parcela": "6309044",
+              "recebido": 2.5,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Grupo empresa tratado como BANCO DO BRASIL CLINICO EMPRESA",
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310977474|6309047|2.78",
+          "rows": [
+            {
+              "linha": 34004,
+              "codigo": "310977474",
+              "parcela": "6309047",
+              "recebido": 2.78,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Grupo empresa tratado como BANCO DO BRASIL CLINICO EMPRESA",
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173943|6255488|65.00",
+          "rows": [
+            {
+              "linha": 34572,
+              "codigo": "311173943",
+              "parcela": "6255488",
+              "recebido": 65,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173943|6255487|65.00",
+          "rows": [
+            {
+              "linha": 34573,
+              "codigo": "311173943",
+              "parcela": "6255487",
+              "recebido": 65,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4302|6266216|984.35",
+          "rows": [
+            {
+              "linha": 1377,
+              "codigo": "4302",
+              "parcela": "6266216",
+              "recebido": 984.35,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4306|6266212|984.35",
+          "rows": [
+            {
+              "linha": 1378,
+              "codigo": "4306",
+              "parcela": "6266212",
+              "recebido": 984.35,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4417|6277707|455.70",
+          "rows": [
+            {
+              "linha": 1444,
+              "codigo": "4417",
+              "parcela": "6277707",
+              "recebido": 455.7,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4562|6277698|600.30",
+          "rows": [
+            {
+              "linha": 1558,
+              "codigo": "4562",
+              "parcela": "6277698",
+              "recebido": 600.3,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "20311|6285371|408.30",
+          "rows": [
+            {
+              "linha": 1767,
+              "codigo": "20311",
+              "parcela": "6285371",
+              "recebido": 408.3,
+              "tipoRecebimento": "ITAU PJ",
+              "tipoPagamento": "ITAU PJ",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-28",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "3155|6301206|17.90",
+          "rows": [
+            {
+              "linha": 25582,
+              "codigo": "3155",
+              "parcela": "6301206",
+              "recebido": 17.9,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4656|6266135|519.15",
+          "rows": [
+            {
+              "linha": 25625,
+              "codigo": "4656",
+              "parcela": "6266135",
+              "recebido": 519.15,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4656|6266134|530.43",
+          "rows": [
+            {
+              "linha": 25626,
+              "codigo": "4656",
+              "parcela": "6266134",
+              "recebido": 530.43,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ],
+      "onlyInManualSample": [
+        {
+          "key": "311177147|6260885|60.00",
+          "rows": [
+            {
+              "linha": 22429,
+              "codigo": "311177147",
+              "parcela": "6260885",
+              "recebido": 60,
+              "tipoRecebimento": "PIX - CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311177147|6217222|60.00",
+          "rows": [
+            {
+              "linha": 34680,
+              "codigo": "311177147",
+              "parcela": "6217222",
+              "recebido": 60,
+              "tipoRecebimento": "PIX - CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310586513|6264682|68.24",
+          "rows": [
+            {
+              "linha": 2795,
+              "codigo": "310586513",
+              "parcela": "6264682",
+              "recebido": 68.24,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECUPERADA",
+              "loteNf": "78945",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310808162|6268828|4.32",
+          "rows": [
+            {
+              "linha": 7995,
+              "codigo": "310808162",
+              "parcela": "6268828",
+              "recebido": 4.32,
+              "tipoRecebimento": "PIX RECORRENTE ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79154",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "311192031|6262089|63.80",
+          "rows": [
+            {
+              "linha": 24449,
+              "codigo": "311192031",
+              "parcela": "6262089",
+              "recebido": 63.8,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-27",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310891486|6289583|70.40",
+          "rows": [
+            {
+              "linha": 11984,
+              "codigo": "310891486",
+              "parcela": "6289583",
+              "recebido": 70.4,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310846364|6260241|74.70",
+          "rows": [
+            {
+              "linha": 9339,
+              "codigo": "310846364",
+              "parcela": "6260241",
+              "recebido": 74.7,
+              "tipoRecebimento": "PIX - CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-31",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311169486|6217171|72.56",
+          "rows": [
+            {
+              "linha": 34375,
+              "codigo": "311169486",
+              "parcela": "6217171",
+              "recebido": 72.56,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311169486|6172311|72.56",
+          "rows": [
+            {
+              "linha": 34376,
+              "codigo": "311169486",
+              "parcela": "6172311",
+              "recebido": 72.56,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Cartao de credito.xlsx": {
+      "onlyInSystemCount": 0,
+      "onlyInManualCount": 14,
+      "onlyInSystemSample": [],
+      "onlyInManualSample": [
+        {
+          "key": "310824231|6278232|69.00",
+          "rows": [
+            {
+              "linha": 8634,
+              "codigo": "310824231",
+              "parcela": "6278232",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310870683|6280430|24.90",
+          "rows": [
+            {
+              "linha": 10611,
+              "codigo": "310870683",
+              "parcela": "6280430",
+              "recebido": 24.9,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECUPERADA",
+              "loteNf": "78769",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-15",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310933420|6289019|69.00",
+          "rows": [
+            {
+              "linha": 15702,
+              "codigo": "310933420",
+              "parcela": "6289019",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173232|6271681|65.00",
+          "rows": [
+            {
+              "linha": 21981,
+              "codigo": "311173232",
+              "parcela": "6271681",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310796093|6256143|101.08",
+          "rows": [
+            {
+              "linha": 28419,
+              "codigo": "310796093",
+              "parcela": "6256143",
+              "recebido": 101.08,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310796093|6213064|101.08",
+          "rows": [
+            {
+              "linha": 28420,
+              "codigo": "310796093",
+              "parcela": "6213064",
+              "recebido": 101.08,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310822259|6245864|69.00",
+          "rows": [
+            {
+              "linha": 28942,
+              "codigo": "310822259",
+              "parcela": "6245864",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310824231|6235662|69.00",
+          "rows": [
+            {
+              "linha": 28983,
+              "codigo": "310824231",
+              "parcela": "6235662",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310890071|6226761|69.00",
+          "rows": [
+            {
+              "linha": 30775,
+              "codigo": "310890071",
+              "parcela": "6226761",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310891015|6246087|69.00",
+          "rows": [
+            {
+              "linha": 30818,
+              "codigo": "310891015",
+              "parcela": "6246087",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-15",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310922785|6239740|138.00",
+          "rows": [
+            {
+              "linha": 31995,
+              "codigo": "310922785",
+              "parcela": "6239740",
+              "recebido": 138,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310968993|6246516|65.00",
+          "rows": [
+            {
+              "linha": 33639,
+              "codigo": "310968993",
+              "parcela": "6246516",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-14",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311174500|6245700|65.00",
+          "rows": [
+            {
+              "linha": 34591,
+              "codigo": "311174500",
+              "parcela": "6245700",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311174500|6199434|65.00",
+          "rows": [
+            {
+              "linha": 34592,
+              "codigo": "311174500",
+              "parcela": "6199434",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Cartao de debito.xlsx": {
+      "onlyInSystemCount": 0,
+      "onlyInManualCount": 1,
+      "onlyInSystemSample": [],
+      "onlyInManualSample": [
+        {
+          "key": "310956498|6216995|71.09",
+          "rows": [
+            {
+              "linha": 33280,
+              "codigo": "310956498",
+              "parcela": "6216995",
+              "recebido": 71.09,
+              "tipoRecebimento": "CARTÃO DEBITO - PLANO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-20",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Devolucao de Mensalidade.xlsx": {
+      "onlyInSystemCount": 21,
+      "onlyInManualCount": 11,
+      "onlyInSystemSample": [
+        {
+          "key": "310824231|6278232|69.00",
+          "rows": [
+            {
+              "linha": 8634,
+              "codigo": "310824231",
+              "parcela": "6278232",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310846364|6260241|74.70",
+          "rows": [
+            {
+              "linha": 9339,
+              "codigo": "310846364",
+              "parcela": "6260241",
+              "recebido": 74.7,
+              "tipoRecebimento": "PIX - CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-31",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310891486|6289583|70.40",
+          "rows": [
+            {
+              "linha": 11984,
+              "codigo": "310891486",
+              "parcela": "6289583",
+              "recebido": 70.4,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310933420|6289019|69.00",
+          "rows": [
+            {
+              "linha": 15702,
+              "codigo": "310933420",
+              "parcela": "6289019",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173232|6271681|65.00",
+          "rows": [
+            {
+              "linha": 21981,
+              "codigo": "311173232",
+              "parcela": "6271681",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311177147|6260885|60.00",
+          "rows": [
+            {
+              "linha": 22429,
+              "codigo": "311177147",
+              "parcela": "6260885",
+              "recebido": 60,
+              "tipoRecebimento": "PIX - CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311192031|6262089|63.80",
+          "rows": [
+            {
+              "linha": 24449,
+              "codigo": "311192031",
+              "parcela": "6262089",
+              "recebido": 63.8,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-27",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310796093|6256143|101.08",
+          "rows": [
+            {
+              "linha": 28419,
+              "codigo": "310796093",
+              "parcela": "6256143",
+              "recebido": 101.08,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310796093|6213064|101.08",
+          "rows": [
+            {
+              "linha": 28420,
+              "codigo": "310796093",
+              "parcela": "6213064",
+              "recebido": 101.08,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310822259|6245864|69.00",
+          "rows": [
+            {
+              "linha": 28942,
+              "codigo": "310822259",
+              "parcela": "6245864",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310824231|6235662|69.00",
+          "rows": [
+            {
+              "linha": 28983,
+              "codigo": "310824231",
+              "parcela": "6235662",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-22",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310890071|6226761|69.00",
+          "rows": [
+            {
+              "linha": 30775,
+              "codigo": "310890071",
+              "parcela": "6226761",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310891015|6246087|69.00",
+          "rows": [
+            {
+              "linha": 30818,
+              "codigo": "310891015",
+              "parcela": "6246087",
+              "recebido": 69,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-15",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310922785|6239740|138.00",
+          "rows": [
+            {
+              "linha": 31995,
+              "codigo": "310922785",
+              "parcela": "6239740",
+              "recebido": 138,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310956498|6216995|71.09",
+          "rows": [
+            {
+              "linha": 33280,
+              "codigo": "310956498",
+              "parcela": "6216995",
+              "recebido": 71.09,
+              "tipoRecebimento": "CARTÃO DEBITO - PLANO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-20",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310968993|6246516|65.00",
+          "rows": [
+            {
+              "linha": 33639,
+              "codigo": "310968993",
+              "parcela": "6246516",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTOLOGIA - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-14",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311169486|6217171|72.56",
+          "rows": [
+            {
+              "linha": 34375,
+              "codigo": "311169486",
+              "parcela": "6217171",
+              "recebido": 72.56,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311169486|6172311|72.56",
+          "rows": [
+            {
+              "linha": 34376,
+              "codigo": "311169486",
+              "parcela": "6172311",
+              "recebido": 72.56,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL ORTO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311174500|6245700|65.00",
+          "rows": [
+            {
+              "linha": 34591,
+              "codigo": "311174500",
+              "parcela": "6245700",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311174500|6199434|65.00",
+          "rows": [
+            {
+              "linha": 34592,
+              "codigo": "311174500",
+              "parcela": "6199434",
+              "recebido": 65,
+              "tipoRecebimento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": true,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ],
+      "onlyInManualSample": [
+        {
+          "key": "4302|6266216|984.35",
+          "rows": [
+            {
+              "linha": 1377,
+              "codigo": "4302",
+              "parcela": "6266216",
+              "recebido": 984.35,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4306|6266212|984.35",
+          "rows": [
+            {
+              "linha": 1378,
+              "codigo": "4306",
+              "parcela": "6266212",
+              "recebido": 984.35,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4417|6277707|455.70",
+          "rows": [
+            {
+              "linha": 1444,
+              "codigo": "4417",
+              "parcela": "6277707",
+              "recebido": 455.7,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "20311|6285371|408.30",
+          "rows": [
+            {
+              "linha": 1767,
+              "codigo": "20311",
+              "parcela": "6285371",
+              "recebido": 408.3,
+              "tipoRecebimento": "ITAU PJ",
+              "tipoPagamento": "ITAU PJ",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-28",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "3155|6301206|17.90",
+          "rows": [
+            {
+              "linha": 25582,
+              "codigo": "3155",
+              "parcela": "6301206",
+              "recebido": 17.9,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "3696400|6294906|3.00",
+          "rows": [
+            {
+              "linha": 25670,
+              "codigo": "3696400",
+              "parcela": "6294906",
+              "recebido": 3,
+              "tipoRecebimento": "PIX RECORRENTE ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoParcela": "ADESÃO",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-30",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173943|6255488|65.00",
+          "rows": [
+            {
+              "linha": 34572,
+              "codigo": "311173943",
+              "parcela": "6255488",
+              "recebido": 65,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311173943|6255487|65.00",
+          "rows": [
+            {
+              "linha": 34573,
+              "codigo": "311173943",
+              "parcela": "6255487",
+              "recebido": 65,
+              "tipoRecebimento": "PIX ODONTOART - P4X",
+              "tipoPagamento": "CARTAO DE CRÉDITO NEW ODONTO - P4X EXTERNO",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4562|6277698|600.30",
+          "rows": [
+            {
+              "linha": 1558,
+              "codigo": "4562",
+              "parcela": "6277698",
+              "recebido": 600.3,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4656|6266135|519.15",
+          "rows": [
+            {
+              "linha": 25625,
+              "codigo": "4656",
+              "parcela": "6266135",
+              "recebido": 519.15,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "4656|6266134|530.43",
+          "rows": [
+            {
+              "linha": 25626,
+              "codigo": "4656",
+              "parcela": "6266134",
+              "recebido": 530.43,
+              "tipoRecebimento": "BANCO DO BRASIL CLINICO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO EMPRESA",
+              "tipoParcela": "COBRANÇA",
+              "grupo": "RECEBIDA",
+              "loteNf": "DEVOLUCAO",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Lote vazio convertido para DEVOLUCAO"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Dinheiro - Caixinha.xlsx": {
+      "onlyInSystemCount": 20,
+      "onlyInManualCount": 17,
+      "onlyInSystemSample": [
+        {
+          "key": "310934341|6181850|63.55",
+          "rows": [
+            {
+              "linha": 32420,
+              "codigo": "310934341",
+              "parcela": "6181850",
+              "recebido": 63.55,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78802",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310942702|6229362|62.50",
+          "rows": [
+            {
+              "linha": 32742,
+              "codigo": "310942702",
+              "parcela": "6229362",
+              "recebido": 62.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310944251|6224755|103.00",
+          "rows": [
+            {
+              "linha": 32813,
+              "codigo": "310944251",
+              "parcela": "6224755",
+              "recebido": 103,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79074",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310951630|6201524|51.00",
+          "rows": [
+            {
+              "linha": 33074,
+              "codigo": "310951630",
+              "parcela": "6201524",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78543",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-06",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310953229|6244799|49.80",
+          "rows": [
+            {
+              "linha": 33140,
+              "codigo": "310953229",
+              "parcela": "6244799",
+              "recebido": 49.8,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78655",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310953229|6198619|49.80",
+          "rows": [
+            {
+              "linha": 33141,
+              "codigo": "310953229",
+              "parcela": "6198619",
+              "recebido": 49.8,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78611",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310969503|6229931|31.90",
+          "rows": [
+            {
+              "linha": 33649,
+              "codigo": "310969503",
+              "parcela": "6229931",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-13",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "310970845|6154745|31.90",
+          "rows": [
+            {
+              "linha": 33726,
+              "codigo": "310970845",
+              "parcela": "6154745",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78526",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-08",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310971247|6231582|51.00",
+          "rows": [
+            {
+              "linha": 33760,
+              "codigo": "310971247",
+              "parcela": "6231582",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78553",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310974272|6229972|127.60",
+          "rows": [
+            {
+              "linha": 33859,
+              "codigo": "310974272",
+              "parcela": "6229972",
+              "recebido": 127.6,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78553",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310975213|6245062|31.90",
+          "rows": [
+            {
+              "linha": 33903,
+              "codigo": "310975213",
+              "parcela": "6245062",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78942",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310975213|6198890|31.90",
+          "rows": [
+            {
+              "linha": 33904,
+              "codigo": "310975213",
+              "parcela": "6198890",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78936",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310982038|6224802|41.00",
+          "rows": [
+            {
+              "linha": 34173,
+              "codigo": "310982038",
+              "parcela": "6224802",
+              "recebido": 41,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78551",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "311170069|6184312|51.00",
+          "rows": [
+            {
+              "linha": 34396,
+              "codigo": "311170069",
+              "parcela": "6184312",
+              "recebido": 51,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78538",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-06",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "311170583|6230213|31.90",
+          "rows": [
+            {
+              "linha": 34416,
+              "codigo": "311170583",
+              "parcela": "6230213",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78738",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311170583|6180079|31.90",
+          "rows": [
+            {
+              "linha": 34417,
+              "codigo": "311170583",
+              "parcela": "6180079",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78732",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311170583|6136834|31.90",
+          "rows": [
+            {
+              "linha": 34418,
+              "codigo": "311170583",
+              "parcela": "6136834",
+              "recebido": 31.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78729",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-12",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311178870|6209174|45.86",
+          "rows": [
+            {
+              "linha": 34730,
+              "codigo": "311178870",
+              "parcela": "6209174",
+              "recebido": 45.86,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78545",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311178870|6164884|45.86",
+          "rows": [
+            {
+              "linha": 34731,
+              "codigo": "311178870",
+              "parcela": "6164884",
+              "recebido": 45.86,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78528",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-05",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "311196670|6309287|34.90",
+          "rows": [
+            {
+              "linha": 35116,
+              "codigo": "311196670",
+              "parcela": "6309287",
+              "recebido": 34.9,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X",
+              "tipoParcela": "ADESÃO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79122",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-31",
+              "devolucaoMensalidade": false,
+              "observacoes": [
+                "Tipo recebimento normalizado para DINHEIRO"
+              ]
+            }
+          ]
+        }
+      ],
+      "onlyInManualSample": [
+        {
+          "key": "2833600|6265094|104.60",
+          "rows": [
+            {
+              "linha": 2174,
+              "codigo": "2833600",
+              "parcela": "6265094",
+              "recebido": 104.6,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78659",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-10",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "4964500|6273664|68.32",
+          "rows": [
+            {
+              "linha": 2267,
+              "codigo": "4964500",
+              "parcela": "6273664",
+              "recebido": 68.32,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79079",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "6693400|6265282|23.06",
+          "rows": [
+            {
+              "linha": 2347,
+              "codigo": "6693400",
+              "parcela": "6265282",
+              "recebido": 23.06,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78809",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310522062|6247452|63.45",
+          "rows": [
+            {
+              "linha": 2376,
+              "codigo": "310522062",
+              "parcela": "6247452",
+              "recebido": 63.45,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78562",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310544029|6267012|38.83",
+          "rows": [
+            {
+              "linha": 2490,
+              "codigo": "310544029",
+              "parcela": "6267012",
+              "recebido": 38.83,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78604",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310555167|6267337|57.45",
+          "rows": [
+            {
+              "linha": 2555,
+              "codigo": "310555167",
+              "parcela": "6267337",
+              "recebido": 57.45,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78605",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-07",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310572935|6247466|54.75",
+          "rows": [
+            {
+              "linha": 2687,
+              "codigo": "310572935",
+              "parcela": "6247466",
+              "recebido": 54.75,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78804",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310574662|6268258|31.62",
+          "rows": [
+            {
+              "linha": 2701,
+              "codigo": "310574662",
+              "parcela": "6268258",
+              "recebido": 31.62,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78606",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310608108|6286099|73.00",
+          "rows": [
+            {
+              "linha": 2974,
+              "codigo": "310608108",
+              "parcela": "6286099",
+              "recebido": 73,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78857",
+              "dtEmissao": "2026-01-21",
+              "dataPagamento": "2026-01-19",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310659553|6250233|25.00",
+          "rows": [
+            {
+              "linha": 4313,
+              "codigo": "310659553",
+              "parcela": "6250233",
+              "recebido": 25,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "BANCO DO BRASIL CLINICO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78804",
+              "dtEmissao": "2026-01-19",
+              "dataPagamento": "2026-01-16",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310720371|6286361|125.00",
+          "rows": [
+            {
+              "linha": 5628,
+              "codigo": "310720371",
+              "parcela": "6286361",
+              "recebido": 125,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78952",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-21",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310724730|6262917|31.34",
+          "rows": [
+            {
+              "linha": 5699,
+              "codigo": "310724730",
+              "parcela": "6262917",
+              "recebido": 31.34,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78580",
+              "dtEmissao": "2026-01-13",
+              "dataPagamento": "2026-01-09",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310770402|6277047|24.42",
+          "rows": [
+            {
+              "linha": 6710,
+              "codigo": "310770402",
+              "parcela": "6277047",
+              "recebido": 24.42,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78948",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310775128|6279743|87.50",
+          "rows": [
+            {
+              "linha": 6859,
+              "codigo": "310775128",
+              "parcela": "6279743",
+              "recebido": 87.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78949",
+              "dtEmissao": "2026-01-27",
+              "dataPagamento": "2026-01-23",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310777825|6279761|63.50",
+          "rows": [
+            {
+              "linha": 6937,
+              "codigo": "310777825",
+              "parcela": "6279761",
+              "recebido": 63.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79081",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-28",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310829103|6286896|66.55",
+          "rows": [
+            {
+              "linha": 8825,
+              "codigo": "310829103",
+              "parcela": "6286896",
+              "recebido": 66.55,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "79083",
+              "dtEmissao": "2026-01-31",
+              "dataPagamento": "2026-01-29",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310835295|6269000|159.50",
+          "rows": [
+            {
+              "linha": 9116,
+              "codigo": "310835295",
+              "parcela": "6269000",
+              "recebido": 159.5,
+              "tipoRecebimento": "DINHEIRO",
+              "tipoPagamento": "CARTAO DE CRÉDITO ODONTOART - P4X EXTERNO",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "78745",
+              "dtEmissao": "2026-01-16",
+              "dataPagamento": "2026-01-15",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        }
+      ]
+    },
+    "Mensalidade Recebida 01.2026 - Enel.xlsx": {
+      "onlyInSystemCount": 3,
+      "onlyInManualCount": 0,
+      "onlyInSystemSample": [
+        {
+          "key": "310537691|3119222|27.90",
+          "rows": [
+            {
+              "linha": 25804,
+              "codigo": "310537691",
+              "parcela": "3119222",
+              "recebido": 27.9,
+              "tipoRecebimento": "ENEL CE",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "26619",
+              "dtEmissao": "2019-12-31",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310719713|2958598|27.90",
+          "rows": [
+            {
+              "linha": 27193,
+              "codigo": "310719713",
+              "parcela": "2958598",
+              "recebido": 27.9,
+              "tipoRecebimento": "ENEL CE",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "23967",
+              "dtEmissao": "2019-09-12",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        },
+        {
+          "key": "310719713|2872452|27.90",
+          "rows": [
+            {
+              "linha": 27194,
+              "codigo": "310719713",
+              "parcela": "2872452",
+              "recebido": 27.9,
+              "tipoRecebimento": "ENEL CE",
+              "tipoPagamento": "ENEL CE",
+              "tipoParcela": "PLANO",
+              "grupo": "RECEBIDA",
+              "loteNf": "22288",
+              "dtEmissao": "2019-07-11",
+              "dataPagamento": "2026-01-02",
+              "devolucaoMensalidade": false,
+              "observacoes": []
+            }
+          ]
+        }
+      ],
+      "onlyInManualSample": []
+    }
+  }
+}

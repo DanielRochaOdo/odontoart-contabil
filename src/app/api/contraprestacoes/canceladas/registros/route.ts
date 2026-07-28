@@ -98,17 +98,10 @@ function parseCompetencia(value: string | undefined): { competencia: string; ano
   return { competencia: `${ano}-${String(mes).padStart(2, "0")}`, ano, mes };
 }
 
-function getFilterReference(row: Pick<CanceladasDbRow, "ano" | "mes" | "vencimento">): {
+function getFilterReference(row: Pick<CanceladasDbRow, "ano" | "mes">): {
   ano: number | null;
   mes: number | null;
 } {
-  if (row.vencimento) {
-    const match = row.vencimento.match(/^(\d{4})-(\d{2})-\d{2}$/);
-    if (match) {
-      return { ano: Number(match[1]), mes: Number(match[2]) };
-    }
-  }
-
   return {
     ano: Number.isInteger(row.ano) ? row.ano : null,
     mes: Number.isInteger(row.mes) ? row.mes : null,
