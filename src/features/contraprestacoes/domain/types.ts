@@ -63,10 +63,18 @@ export interface ContraprestacoesSummary {
   totalValorPagamento: number;
 }
 
+export interface ContraprestacoesSettings {
+  tarifaCartaoDebito: number;
+  tarifaCartaoCredito: number;
+  tarifaDebitoEmConta: number;
+  tarifaPixFixo: number;
+}
+
 export interface ContraprestacoesProcessInput {
   escopo: ContraprestacoesScope;
   competencia: Competencia;
   baseBuffer: Uint8Array;
+  settings: ContraprestacoesSettings;
 }
 
 export interface ContraprestacoesProcessOutput {

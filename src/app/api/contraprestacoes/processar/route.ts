@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
-import { ContraprestacoesScope } from "@/features/contraprestacoes/domain/types";
+import {
+  ContraprestacoesScope,
+  ContraprestacoesSettings,
+} from "@/features/contraprestacoes/domain/types";
 import { ContraprestacoesProcessor } from "@/features/contraprestacoes/services/ContraprestacoesProcessor";
+import { resolveContraprestacoesSettings } from "@/features/contraprestacoes/services/contraprestacoesSettings";
 import { Competencia } from "@/features/eventos/domain/types";
 import { CompetenciaDetector } from "@/features/eventos/services/CompetenciaDetector";
 import { parseCompetencia } from "@/features/eventos/services/utils";
@@ -19,6 +23,20 @@ function toFriendlyMessage(error: unknown): string {
 
 function resolveScope(value: FormDataEntryValue | null): ContraprestacoesScope {
   return value === "recuperadas" ? "recuperadas" : "recebidas";
+}
+
+function resolveSettings(value: FormDataEntryValue | null): ContraprestacoesSettings {
+  if (typeof value !== "string" || !value.trim()) {
+    return resolveContraprestacoesSettings(undefined);
+  }
+
+  try {
+    return resolveContraprestacoesSettings(
+      JSON.parse(value) as Partial<ContraprestacoesSettings>,
+    );
+  } catch {
+    return resolveContraprestacoesSettings(undefined);
+  }
 }
 
 async function resolveCompetencia(
@@ -41,6 +59,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const escopo = resolveScope(formData.get("escopo"));
+    const settings = resolveSettings(formData.get("settings"));
     const baseFile = formData.get("base") ?? formData.get("recebidas") ?? formData.get("escrituracao");
     const competenciaRaw = formData.get("competencia");
 
@@ -70,6 +89,7 @@ export async function POST(request: Request) {
       escopo,
       competencia,
       baseBuffer,
+      settings,
     });
 
     const summaryHeader = Buffer.from(JSON.stringify(result.summary), "utf8").toString("base64");

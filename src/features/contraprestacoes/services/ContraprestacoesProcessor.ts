@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
 import {
+  ContraprestacoesSettings,
   ContraprestacoesProcessInput,
   ContraprestacoesProcessOutput,
   ContraprestacoesScope,
@@ -12,11 +13,16 @@ import {
   buildContraprestacoesSummary,
 } from "@/features/contraprestacoes/services/contraprestacoesRules";
 import { fetchCanceladasParcelasFromSupabase } from "@/features/contraprestacoes/services/canceladasParcelas";
+import { resolveContraprestacoesSettings } from "@/features/contraprestacoes/services/contraprestacoesSettings";
 
 export class ContraprestacoesProcessor {
   private readonly parser = new RecebidasWorkbookParser();
 
   private readonly reportFactory = new ContraprestacoesReportFactory();
+
+  private resolveSettings(settings: ContraprestacoesSettings): ContraprestacoesSettings {
+    return resolveContraprestacoesSettings(settings);
+  }
 
   private labelForScope(escopo: ContraprestacoesScope): string {
     return escopo === "recuperadas" ? "Recuperadas" : "Recebidas";
@@ -26,6 +32,7 @@ export class ContraprestacoesProcessor {
     const rows = await this.parser.parse(input.baseBuffer);
     const canceladasParcelas = await fetchCanceladasParcelasFromSupabase();
     const processedRows = applyRecebidasRules(rows, canceladasParcelas, input.competencia);
+    const settings = this.resolveSettings(input.settings);
 
     if (processedRows.length === 0) {
       throw new ContraprestacoesError(
@@ -38,6 +45,7 @@ export class ContraprestacoesProcessor {
       processedRows,
       input.competencia,
       input.escopo,
+      settings,
     );
     const zip = new JSZip();
     reports.forEach((report) => {

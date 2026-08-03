@@ -1,10 +1,12 @@
 import ExcelJS from "exceljs";
 import {
+  ContraprestacoesSettings,
   ContraprestacoesScope,
   ContraprestacoesReportId,
   ProcessedRecebidaRow,
 } from "@/features/contraprestacoes/domain/types";
 import { Competencia } from "@/features/eventos/domain/types";
+import { resolveContraprestacoesSettings } from "@/features/contraprestacoes/services/contraprestacoesSettings";
 
 type CellKind = "string" | "number" | "currency" | "date";
 export type WorkbookMode = "split" | "single";
@@ -33,10 +35,6 @@ export interface GeneratedWorkbook {
 const DATE_FORMAT = "dd/mm/yyyy";
 const CURRENCY_FORMAT = '"R$" #,##0.00';
 const NUMBER_FORMAT = "#,##0.00";
-const CARD_CREDIT_FEE = 0.0115;
-const CARD_DEBIT_FEE = 0.0069;
-const AGENTE_RECEBEDOR_FEE = 3.28;
-const PIX_RECORRENTE_FEE = 2;
 
 const BOLETO_TYPES = new Set(
   [
@@ -359,7 +357,7 @@ function columnsDevolucao(): ColumnDefinition<ProcessedRecebidaRow>[] {
   ];
 }
 
-function columnsDebitoEmConta(): ColumnDefinition<ProcessedRecebidaRow>[] {
+function columnsDebitoEmConta(fee: number): ColumnDefinition<ProcessedRecebidaRow>[] {
   return [
     { header: "CODIGO", width: 14, kind: "string", value: (row) => row.codigo },
     { header: "NOME", width: 42, kind: "string", value: (row) => row.nomeFantasia },
@@ -372,12 +370,12 @@ function columnsDebitoEmConta(): ColumnDefinition<ProcessedRecebidaRow>[] {
     { header: "ACRESCIMO", width: 16, kind: "currency", value: acrescimo },
     { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     { header: "DATA CREDITO", width: 16, kind: "date", value: (row) => addDays(row.dataPagamento, 2) },
-    { header: "TARIFA FIXA", width: 14, kind: "currency", value: () => AGENTE_RECEBEDOR_FEE },
+    { header: "TARIFA FIXA", width: 14, kind: "currency", value: () => fee },
     { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
   ];
 }
 
-function columnsPixRecorrente(): ColumnDefinition<ProcessedRecebidaRow>[] {
+function columnsPixRecorrente(fee: number): ColumnDefinition<ProcessedRecebidaRow>[] {
   return [
     { header: "CODIGO", width: 14, kind: "string", value: (row) => row.codigo },
     { header: "NOME", width: 42, kind: "string", value: (row) => row.nomeFantasia },
@@ -391,7 +389,7 @@ function columnsPixRecorrente(): ColumnDefinition<ProcessedRecebidaRow>[] {
     { header: "RECEBIDO", width: 16, kind: "currency", value: (row) => row.valorPagamento },
     { header: "DATA CREDITO", width: 16, kind: "date", value: (row) => row.dataPagamento },
     { header: "PARCELA", width: 18, kind: "string", value: (row) => row.parcela },
-    { header: "TARIFA FIXA", width: 14, kind: "currency", value: () => PIX_RECORRENTE_FEE },
+    { header: "TARIFA FIXA", width: 14, kind: "currency", value: () => fee },
     {
       header: "TIPO RECEBIMENTO",
       width: 32,
@@ -506,7 +504,9 @@ export function buildWorkbookDefinitions(
   rows: ProcessedRecebidaRow[],
   competencia: Competencia,
   escopo: ContraprestacoesScope,
+  settingsInput: ContraprestacoesSettings,
 ): WorkbookDefinition[] {
+  const settings = resolveContraprestacoesSettings(settingsInput);
   const token = competenciaToken(competencia);
   const recuperadas = rows.filter((row) => row.grupo === "RECUPERADA");
   const recebidas = rows.filter((row) => row.grupo === "RECEBIDA");
@@ -543,14 +543,14 @@ export function buildWorkbookDefinitions(
       fileName: `Mensalidade Recuperados ${token} - Cartao de credito.xlsx`,
       mode: "split",
       rows: recuperadas.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
-      columns: columnsCard(31, CARD_CREDIT_FEE),
+      columns: columnsCard(31, settings.tarifaCartaoCredito),
     },
     {
       reportId: "recuperada-cartao-debito",
       fileName: `Mensalidade Recuperados ${token} - Cartao de debito.xlsx`,
       mode: "split",
       rows: recuperadas.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
-      columns: columnsCard(1, CARD_DEBIT_FEE),
+      columns: columnsCard(1, settings.tarifaCartaoDebito),
     },
     {
       reportId: "recuperada-dinheiro-caixinha",
@@ -581,14 +581,14 @@ export function buildWorkbookDefinitions(
       fileName: `Mensalidade Recebida ${token} - Cartao de credito.xlsx`,
       mode: "split",
       rows: recebidasNormais.filter((row) => CARTAO_CREDITO_TYPES.has(normalizedTipoRecebimento(row))),
-      columns: columnsCard(31, CARD_CREDIT_FEE),
+      columns: columnsCard(31, settings.tarifaCartaoCredito),
     },
     {
       reportId: "recebida-cartao-debito",
       fileName: `Mensalidade Recebida ${token} - Cartao de debito.xlsx`,
       mode: "split",
       rows: recebidasNormais.filter((row) => CARTAO_DEBITO_TYPES.has(normalizedTipoRecebimento(row))),
-      columns: columnsCard(1, CARD_DEBIT_FEE),
+      columns: columnsCard(1, settings.tarifaCartaoDebito),
     },
     {
       reportId: "recebida-enel",
@@ -623,14 +623,14 @@ export function buildWorkbookDefinitions(
       fileName: `Mensalidade Recebida ${token} - Debito em Conta.xlsx`,
       mode: "single",
       rows: recebidasNormais.filter((row) => normalizedTipoRecebimento(row) === "DEBITO EM CONTA BB"),
-      columns: columnsDebitoEmConta(),
+      columns: columnsDebitoEmConta(settings.tarifaDebitoEmConta),
     },
     {
       reportId: "recebida-pix-recorrente",
       fileName: `Mensalidade Recebida ${token} - PIX Recorrente.xlsx`,
       mode: "split",
       rows: recebidasNormais.filter((row) => PIX_RECORRENTE_TYPES.has(normalizedTipoRecebimento(row))),
-      columns: columnsPixRecorrente(),
+      columns: columnsPixRecorrente(settings.tarifaPixFixo),
     },
   ];
 
@@ -644,8 +644,9 @@ export class ContraprestacoesReportFactory {
     rows: ProcessedRecebidaRow[],
     competencia: Competencia,
     escopo: ContraprestacoesScope,
+    settings: ContraprestacoesSettings,
   ): Promise<GeneratedWorkbook[]> {
-    const definitions = buildWorkbookDefinitions(rows, competencia, escopo);
+    const definitions = buildWorkbookDefinitions(rows, competencia, escopo, settings);
     const workbooks: GeneratedWorkbook[] = [];
     for (const definition of definitions) {
       workbooks.push(await buildWorkbook(definition));
