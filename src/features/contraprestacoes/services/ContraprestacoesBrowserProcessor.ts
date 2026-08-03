@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
 import {
+  ContraprestacoesSettings,
   ContraprestacoesScope,
   ContraprestacoesSummary,
 } from "@/features/contraprestacoes/domain/types";
@@ -13,11 +14,13 @@ import {
   applyRecebidasRules,
   buildContraprestacoesSummary,
 } from "@/features/contraprestacoes/services/contraprestacoesRules";
+import { resolveContraprestacoesSettings } from "@/features/contraprestacoes/services/contraprestacoesSettings";
 
 interface BrowserProcessInput {
   escopo: ContraprestacoesScope;
   competenciaRaw: string | null | undefined;
   baseFile: File;
+  settings: ContraprestacoesSettings;
 }
 
 interface BrowserProcessOutput {
@@ -81,6 +84,7 @@ export async function processContraprestacoesInBrowser(
   const rows = await parser.parse(baseBuffer);
   const canceladasParcelas = await fetchCanceladasParcelas();
   const processedRows = applyRecebidasRules(rows, canceladasParcelas, competencia);
+  const settings = resolveContraprestacoesSettings(input.settings);
 
   if (processedRows.length === 0) {
     throw new ContraprestacoesError(
@@ -89,7 +93,7 @@ export async function processContraprestacoesInBrowser(
     );
   }
 
-  const reports = await reportFactory.buildReports(processedRows, competencia, input.escopo);
+  const reports = await reportFactory.buildReports(processedRows, competencia, input.escopo, settings);
   const zip = new JSZip();
   reports.forEach((report) => {
     zip.file(report.fileName, report.buffer);

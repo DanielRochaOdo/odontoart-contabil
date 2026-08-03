@@ -22,11 +22,18 @@ import {
   Download,
   FileSpreadsheet,
   FolderOpen,
+  Settings,
   Layers3,
   LoaderCircle,
   RefreshCcw,
   X,
 } from "lucide-react";
+import { ContraprestacoesSettings } from "@/features/contraprestacoes/domain/types";
+import {
+  CONTRAPRESTACOES_SETTINGS_STORAGE_KEY,
+  DEFAULT_CONTRAPRESTACOES_SETTINGS,
+  resolveContraprestacoesSettings,
+} from "@/features/contraprestacoes/services/contraprestacoesSettings";
 import styles from "./page.module.css";
 
 interface ProcessSummary {
@@ -115,8 +122,12 @@ interface CanceladasProcessSummary {
 }
 
 type SubmitState = "idle" | "loading" | "success" | "error";
-type Module = "eventos" | "relatorios" | "contraprestacoes";
-type ContraprestacoesModule = "canceladas" | "recebidas" | "recuperadas" | "conferencia";
+type Module = "eventos" | "relatorios" | "contraprestacoes" | "configuracoes";
+type ContraprestacoesModule =
+  | "canceladas"
+  | "recebidas"
+  | "recuperadas"
+  | "conferencia";
 type ReportsState = "idle" | "loading" | "ready" | "error";
 type CanceladasSortField =
   | "competencia"
@@ -165,6 +176,21 @@ function monthLabel(month: number): string {
   const baseDate = new Date(2000, month - 1, 1);
   if (Number.isNaN(baseDate.getTime())) return String(month);
   return baseDate.toLocaleString("pt-BR", { month: "long" });
+}
+
+function formatPercent(value: number): string {
+  return `${(value * 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  })}%`;
+}
+
+function parseNonNegativeNumber(value: string, fallback: number): number {
+  const normalized = value.replace(",", ".").trim();
+  if (!normalized) return fallback;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return parsed;
 }
 
 function formatDateBr(value: string | null): string {
@@ -290,6 +316,21 @@ export default function Home() {
   const [recuperadasSummary, setRecuperadasSummary] = useState<ContraprestacoesSummary | null>(null);
   const [recuperadasCompetenciaHint, setRecuperadasCompetenciaHint] = useState("");
   const [recuperadasProgress, setRecuperadasProgress] = useState<ActionProgress>(createIdleProgress);
+  const [settingsValues, setSettingsValues] = useState<ContraprestacoesSettings>(() => {
+    if (typeof window === "undefined") return DEFAULT_CONTRAPRESTACOES_SETTINGS;
+
+    try {
+      const raw = window.localStorage.getItem(CONTRAPRESTACOES_SETTINGS_STORAGE_KEY);
+      if (!raw) return DEFAULT_CONTRAPRESTACOES_SETTINGS;
+      return resolveContraprestacoesSettings(
+        JSON.parse(raw) as Partial<ContraprestacoesSettings>,
+      );
+    } catch {
+      return DEFAULT_CONTRAPRESTACOES_SETTINGS;
+    }
+  });
+  const [settingsStatus, setSettingsStatus] = useState<SubmitState>("idle");
+  const [settingsMessage, setSettingsMessage] = useState("");
 
   const [reportRows, setReportRows] = useState<ReportRow[]>([]);
   const [reportsState, setReportsState] = useState<ReportsState>("idle");
@@ -468,6 +509,36 @@ export default function Home() {
     void detectCompetenciaFromFile(file, "Canceladas", setCanceladasCompetenciaHint);
   }
 
+  function updateSettingsValue(
+    field: keyof ContraprestacoesSettings,
+    rawValue: string,
+  ) {
+    setSettingsStatus("idle");
+    setSettingsMessage("");
+    setSettingsValues((current) => ({
+      ...current,
+      [field]: parseNonNegativeNumber(rawValue, current[field]),
+    }));
+  }
+
+  function handleSettingsSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    try {
+      const sanitized = resolveContraprestacoesSettings(settingsValues);
+      window.localStorage.setItem(
+        CONTRAPRESTACOES_SETTINGS_STORAGE_KEY,
+        JSON.stringify(sanitized),
+      );
+      setSettingsValues(sanitized);
+      setSettingsStatus("success");
+      setSettingsMessage("Configuracoes salvas e prontas para os proximos processamentos.");
+    } catch {
+      setSettingsStatus("error");
+      setSettingsMessage("Nao foi possivel salvar as configuracoes neste navegador.");
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!knownFile || !liquidFile) return;
@@ -613,6 +684,7 @@ export default function Home() {
         escopo,
         competenciaRaw: competencia,
         baseFile: file,
+        settings: settingsValues,
       });
 
       if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
@@ -1262,6 +1334,12 @@ export default function Home() {
           <h1>{titulo}</h1>
           <p>{descricao}</p>
           <p className={styles.ruleNote}>{nota}</p>
+          <p className={styles.helper}>
+            Tarifas ativas: crédito {formatPercent(settingsValues.tarifaCartaoCredito)}, débito{" "}
+            {formatPercent(settingsValues.tarifaCartaoDebito)}, débito em conta{" "}
+            {formatCurrency(settingsValues.tarifaDebitoEmConta)} e PIX{" "}
+            {formatCurrency(settingsValues.tarifaPixFixo)}.
+          </p>
         </header>
 
         <section className={styles.card}>
@@ -1758,6 +1836,115 @@ export default function Home() {
     );
   }
 
+  function renderConfiguracoes() {
+    return (
+      <>
+        <header className={styles.header}>
+          <h1>Configuracoes</h1>
+          <p>
+            Defina as tarifas usadas nos relatorios de contraprestacoes. Os valores salvos passam
+            a valer nos proximos processamentos de Recebidas e Recuperadas.
+          </p>
+          <p className={styles.ruleNote}>
+            As configuracoes ficam gravadas neste navegador. Se acessar em outra maquina, sera
+            preciso informar novamente.
+          </p>
+        </header>
+
+        <section className={styles.card}>
+          <form onSubmit={handleSettingsSubmit} className={styles.form}>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span>Tarifa do cartao de debito</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  value={settingsValues.tarifaCartaoDebito}
+                  onChange={(event) =>
+                    updateSettingsValue("tarifaCartaoDebito", event.target.value)
+                  }
+                  required
+                />
+                <small className={styles.helper}>
+                  Informe em decimal. Exemplo: 0.0069 = 0,69%.
+                </small>
+              </label>
+
+              <label className={styles.field}>
+                <span>Tarifa do cartao de credito</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  value={settingsValues.tarifaCartaoCredito}
+                  onChange={(event) =>
+                    updateSettingsValue("tarifaCartaoCredito", event.target.value)
+                  }
+                  required
+                />
+                <small className={styles.helper}>
+                  Informe em decimal. Exemplo: 0.0115 = 1,15%.
+                </small>
+              </label>
+
+              <label className={styles.field}>
+                <span>Tarifa em debito em conta</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={settingsValues.tarifaDebitoEmConta}
+                  onChange={(event) =>
+                    updateSettingsValue("tarifaDebitoEmConta", event.target.value)
+                  }
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Tarifa valor fixo do PIX</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={settingsValues.tarifaPixFixo}
+                  onChange={(event) =>
+                    updateSettingsValue("tarifaPixFixo", event.target.value)
+                  }
+                  required
+                />
+              </label>
+            </div>
+
+            <div className={styles.actions}>
+              <button type="submit" className={styles.primaryBtn}>
+                <CheckCircle2 size={15} />
+                <span>Salvar Configuracoes</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {(settingsStatus === "success" || settingsStatus === "error") && settingsMessage && (
+          <section className={styles.feedback}>
+            {settingsStatus === "success" ? (
+              <p className={styles.successMsg}>
+                <CheckCircle2 size={16} />
+                {settingsMessage}
+              </p>
+            ) : (
+              <p className={styles.errorMsg}>
+                <AlertTriangle size={16} />
+                {settingsMessage}
+              </p>
+            )}
+          </section>
+        )}
+      </>
+    );
+  }
+
   function renderContraprestacoes() {
     if (activeContraprestacoesModule === "canceladas") return renderContraprestacoesCanceladas();
     if (activeContraprestacoesModule === "recebidas") return renderContraprestacoesRecebidas();
@@ -1975,7 +2162,13 @@ export default function Home() {
               gerar apenas os relatorios de recuperadas.
             </p>
 
-            <h3>5. Relatorios</h3>
+            <h3>5. Configuracoes</h3>
+            <p>
+              Antes de processar contraprestacoes, revise as tarifas de cartao, debito em conta e
+              PIX para garantir que os calculos usem os valores vigentes.
+            </p>
+
+            <h3>6. Relatorios</h3>
             <p>
               Consulte o historico de processamentos por competencia e use Ver detalhes para
               auditoria e conferencia.
@@ -2129,6 +2322,17 @@ export default function Home() {
           <button
             type="button"
             className={`${styles.moduleItem} ${
+              activeModule === "configuracoes" ? styles.active : ""
+            }`}
+            title="Configuracoes"
+            onClick={() => setActiveModule("configuracoes")}
+          >
+            <Settings size={16} />
+            {!sidebarCollapsed && <span className={styles.moduleLabel}>Configuracoes</span>}
+          </button>
+          <button
+            type="button"
+            className={`${styles.moduleItem} ${
               activeModule === "relatorios" ? styles.active : ""
             }`}
             title="Relatorios"
@@ -2151,7 +2355,9 @@ export default function Home() {
           ? renderEventos()
           : activeModule === "contraprestacoes"
             ? renderContraprestacoes()
-            : renderRelatorios()}
+            : activeModule === "configuracoes"
+              ? renderConfiguracoes()
+              : renderRelatorios()}
       </main>
       {renderGuideModal()}
     </div>
