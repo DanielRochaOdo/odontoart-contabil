@@ -1,11 +1,14 @@
 import JSZip from "jszip";
 import { ContraprestacoesError } from "@/features/contraprestacoes/domain/errors";
 import {
+  ContraprestacoesGeneratedFile,
   ContraprestacoesSettings,
   ContraprestacoesProcessInput,
   ContraprestacoesProcessOutput,
   ContraprestacoesScope,
 } from "@/features/contraprestacoes/domain/types";
+import { ContraprestacoesProcessLogRepository } from "@/features/contraprestacoes/repositories/ContraprestacoesProcessLogRepository";
+import { SupabaseContraprestacoesProcessLogRepository } from "@/features/contraprestacoes/repositories/SupabaseContraprestacoesProcessLogRepository";
 import { ContraprestacoesReportFactory } from "@/features/contraprestacoes/services/ContraprestacoesReportFactory";
 import { RecebidasWorkbookParser } from "@/features/contraprestacoes/services/RecebidasWorkbookParser";
 import {
@@ -19,6 +22,10 @@ export class ContraprestacoesProcessor {
   private readonly parser = new RecebidasWorkbookParser();
 
   private readonly reportFactory = new ContraprestacoesReportFactory();
+
+  constructor(
+    private readonly repository: ContraprestacoesProcessLogRepository = new SupabaseContraprestacoesProcessLogRepository(),
+  ) {}
 
   private resolveSettings(settings: ContraprestacoesSettings): ContraprestacoesSettings {
     return resolveContraprestacoesSettings(settings);
@@ -59,14 +66,29 @@ export class ContraprestacoesProcessor {
       rows.length,
       input.competencia,
     );
+    const generatedFiles: ContraprestacoesGeneratedFile[] = reports.map((report) => ({
+      reportId: report.reportId,
+      fileName: report.fileName,
+      rowCount: report.rowCount,
+    }));
+    summary.arquivosGerados = generatedFiles.length;
+
+    try {
+      await this.repository.save({
+        summary,
+        fileName: `${String(input.competencia.mes).padStart(2, "0")}.${input.competencia.ano} Contraprestacoes - ${this.labelForScope(input.escopo)}.zip`,
+        fileBuffer: zipBuffer,
+        generatedFiles,
+      });
+    } catch {
+      // Mantem o fluxo operacional mesmo sem persistencia do historico.
+    }
 
     return {
       fileName: `${String(input.competencia.mes).padStart(2, "0")}.${input.competencia.ano} Contraprestacoes - ${this.labelForScope(input.escopo)}.zip`,
       fileBuffer: zipBuffer,
-      summary: {
-        ...summary,
-        arquivosGerados: reports.length,
-      },
+      summary,
+      generatedFiles,
     };
   }
 }

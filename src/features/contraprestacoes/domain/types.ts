@@ -20,6 +20,12 @@ export type ContraprestacoesReportId =
   | "recebida-debito-em-conta"
   | "recebida-pix-recorrente";
 
+export interface ContraprestacoesGeneratedFile {
+  reportId: ContraprestacoesReportId;
+  fileName: string;
+  rowCount: number;
+}
+
 export interface RecebidaRow {
   linhaOrigem: number;
   codigo: string;
@@ -81,4 +87,5 @@ export interface ContraprestacoesProcessOutput {
   fileName: string;
   fileBuffer: Uint8Array;
   summary: ContraprestacoesSummary;
+  generatedFiles: ContraprestacoesGeneratedFile[];
 }

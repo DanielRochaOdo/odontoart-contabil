@@ -121,6 +121,52 @@ interface CanceladasProcessSummary {
   arquivosGerados: number;
 }
 
+interface ConferenceProcessRow {
+  id: number;
+  competencia: string;
+  escopo: "recebidas" | "recuperadas";
+  entradaBase: number;
+  registrosTratados: number;
+  recuperadas: number;
+  recebidas: number;
+  devolucoes: number;
+  arquivosGerados: number;
+  totalValorPagamento: number;
+  arquivoNome: string;
+  storagePath: string | null;
+  reportFiles: Array<{
+    reportId: string;
+    fileName: string;
+    rowCount: number;
+  }>;
+  criadoEm: string;
+}
+
+interface ConferenceDivergence {
+  severity: "error" | "warning";
+  escopo: "recebidas" | "recuperadas" | "geral";
+  message: string;
+}
+
+interface ConferenceScopeSummary {
+  escopo: "recebidas" | "recuperadas";
+  status: "ok" | "warning" | "error";
+  latest: ConferenceProcessRow | null;
+  expectedArquivos: number;
+  actualArquivos: number;
+  expectedLinhasSaida: number;
+  actualLinhasSaida: number;
+  baseTratadaLinhas: number;
+}
+
+interface ConferenceSummary {
+  competencia: string;
+  rows: ConferenceProcessRow[];
+  escopos: ConferenceScopeSummary[];
+  divergencias: ConferenceDivergence[];
+  canDownloadConsolidated: boolean;
+}
+
 type SubmitState = "idle" | "loading" | "success" | "error";
 type Module = "eventos" | "relatorios" | "contraprestacoes" | "configuracoes";
 type ContraprestacoesModule =
@@ -129,6 +175,7 @@ type ContraprestacoesModule =
   | "recuperadas"
   | "conferencia";
 type ReportsState = "idle" | "loading" | "ready" | "error";
+type ConferenceState = "idle" | "loading" | "ready" | "error";
 type CanceladasSortField =
   | "competencia"
   | "codigo"
@@ -339,6 +386,7 @@ export default function Home() {
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const hasLoadedReportsRef = useRef(false);
   const hasLoadedCanceladasRef = useRef(false);
+  const hasLoadedConferenciaRef = useRef(false);
 
   const [canceladasRows, setCanceladasRows] = useState<CanceladaRow[]>([]);
   const [canceladasLoading, setCanceladasLoading] = useState(false);
@@ -366,6 +414,11 @@ export default function Home() {
   const [eventosProgress, setEventosProgress] = useState<ActionProgress>(createIdleProgress);
   const [canceladasProcessProgress, setCanceladasProcessProgress] =
     useState<ActionProgress>(createIdleProgress);
+  const [conferenceCompetencia, setConferenceCompetencia] = useState(() => currentMonth());
+  const [conferenceState, setConferenceState] = useState<ConferenceState>("idle");
+  const [conferenceError, setConferenceError] = useState("");
+  const [conferenceSummary, setConferenceSummary] = useState<ConferenceSummary | null>(null);
+  const [conferenceDownloadState, setConferenceDownloadState] = useState<SubmitState>("idle");
 
   const canSubmit = useMemo(
     () => Boolean(knownFile && liquidFile && competencia) && status !== "loading",
@@ -893,6 +946,79 @@ export default function Home() {
     ],
   );
 
+  const loadConference = useCallback(async () => {
+    if (!conferenceCompetencia) return;
+
+    setConferenceState("loading");
+    setConferenceError("");
+
+    try {
+      const params = new URLSearchParams();
+      params.set("competencia", conferenceCompetencia);
+
+      const response = await fetch(`/api/contraprestacoes/conferencia?${params.toString()}`, {
+        method: "GET",
+      });
+
+      const payload = (await response.json()) as ConferenceSummary & { message?: string };
+      if (!response.ok) {
+        throw new Error(
+          payload.message ?? "Nao foi possivel carregar a conferencia desta competencia.",
+        );
+      }
+
+      setConferenceSummary(payload);
+      setConferenceState("ready");
+    } catch (error) {
+      setConferenceSummary(null);
+      setConferenceState("error");
+      setConferenceError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel carregar a conferencia desta competencia.",
+      );
+    }
+  }, [conferenceCompetencia]);
+
+  async function handleDownloadConference() {
+    if (!conferenceCompetencia) return;
+
+    setConferenceDownloadState("loading");
+    setConferenceError("");
+
+    try {
+      const params = new URLSearchParams();
+      params.set("competencia", conferenceCompetencia);
+
+      const response = await fetch(
+        `/api/contraprestacoes/conferencia/download?${params.toString()}`,
+        { method: "GET" },
+      );
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(
+          payload?.message ?? "Nao foi possivel baixar o ZIP consolidado da conferencia.",
+        );
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const match = disposition.match(/filename=\"([^\"]+)\"/i);
+      const fileName =
+        match?.[1] ?? `${conferenceCompetencia.replace("-", ".")} Contraprestacoes - Conferencia.zip`;
+      downloadBlob(blob, fileName);
+      setConferenceDownloadState("success");
+    } catch (error) {
+      setConferenceDownloadState("error");
+      setConferenceError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel baixar o ZIP consolidado da conferencia.",
+      );
+    }
+  }
+
   async function handleCanceladasProcessSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canceladasProcessFile) return;
@@ -1177,6 +1303,15 @@ export default function Home() {
     hasLoadedCanceladasRef.current = true;
     void loadCanceladas();
   }, [activeModule, activeContraprestacoesModule, loadCanceladas]);
+
+  useEffect(() => {
+    const isConferenciaActive =
+      activeModule === "contraprestacoes" && activeContraprestacoesModule === "conferencia";
+    if (!isConferenciaActive) return;
+    if (hasLoadedConferenciaRef.current) return;
+    hasLoadedConferenciaRef.current = true;
+    void loadConference();
+  }, [activeModule, activeContraprestacoesModule, loadConference]);
 
   useEffect(() => {
     if (!guideOpen) return;
@@ -1816,6 +1951,10 @@ export default function Home() {
   }
 
   function renderContraprestacoesConferencia() {
+    const escopos = conferenceSummary?.escopos ?? [];
+    const rows = conferenceSummary?.rows ?? [];
+    const divergencias = conferenceSummary?.divergencias ?? [];
+
     return (
       <>
         <header className={styles.header}>
@@ -1826,11 +1965,176 @@ export default function Home() {
           </p>
         </header>
 
+        <section className={styles.card}>
+          <div className={styles.reportControls}>
+            <label className={styles.fieldInline}>
+              <span>Competencia</span>
+              <input
+                type="month"
+                value={conferenceCompetencia}
+                onChange={(event) => setConferenceCompetencia(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => void loadConference()}
+            >
+              {conferenceState === "loading" ? (
+                <LoaderCircle size={14} className={styles.spin} />
+              ) : (
+                <RefreshCcw size={14} />
+              )}
+              <span>Atualizar</span>
+            </button>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={() => void handleDownloadConference()}
+              disabled={
+                conferenceDownloadState === "loading" ||
+                !conferenceSummary?.canDownloadConsolidated
+              }
+            >
+              {conferenceDownloadState === "loading" ? (
+                <LoaderCircle size={14} className={styles.spin} />
+              ) : (
+                <Download size={14} />
+              )}
+              <span>Baixar Consolidado</span>
+            </button>
+          </div>
+        </section>
+
         <section className={styles.feedback}>
-          <p className={styles.infoMsg}>
-            <FolderOpen size={16} />
-            Este submenu consolida os arquivos de saida e destaca divergencias para revisao.
-          </p>
+          {conferenceError && (
+            <p className={styles.errorMsg}>
+              <AlertTriangle size={16} />
+              {conferenceError}
+            </p>
+          )}
+
+          {!conferenceError && conferenceState === "loading" && (
+            <p className={styles.infoMsg}>
+              <LoaderCircle size={16} className={styles.spin} />
+              Carregando conferencia da competencia {formatCompetenciaBr(conferenceCompetencia)}...
+            </p>
+          )}
+
+          {!conferenceError && conferenceDownloadState === "success" && (
+            <p className={styles.successMsg}>
+              <CheckCircle2 size={16} />
+              O download do ZIP consolidado desta competencia foi iniciado.
+            </p>
+          )}
+
+          {!conferenceError && conferenceState === "ready" && conferenceSummary && (
+            <div className={styles.summary}>
+              <h2>Conferencia da Competencia {conferenceSummary.competencia}</h2>
+              <ul>
+                <li>Processamentos salvos: {rows.length}</li>
+                <li>Escopos prontos para consolidacao: {escopos.filter((item) => item.latest).length}/2</li>
+                <li>Divergencias identificadas: {divergencias.length}</li>
+              </ul>
+
+              {escopos.length > 0 && (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Escopo</th>
+                        <th>Status</th>
+                        <th>Arquivos</th>
+                        <th>Linhas Esperadas</th>
+                        <th>Linhas Consolidadas</th>
+                        <th>Base Tratada</th>
+                        <th>Total Pagamento</th>
+                        <th>Processado em</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {escopos.map((item) => (
+                        <tr key={item.escopo}>
+                          <td>{item.escopo}</td>
+                          <td>{item.status.toUpperCase()}</td>
+                          <td>
+                            {item.actualArquivos}/{item.expectedArquivos}
+                          </td>
+                          <td>{item.expectedLinhasSaida}</td>
+                          <td>{item.actualLinhasSaida}</td>
+                          <td>{item.baseTratadaLinhas}</td>
+                          <td>
+                            {item.latest
+                              ? formatCurrency(item.latest.totalValorPagamento)
+                              : "-"}
+                          </td>
+                          <td>{item.latest ? formatDate(item.latest.criadoEm) : "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {divergencias.length > 0 ? (
+                <div className={styles.warnings}>
+                  <h3>Divergencias encontradas</h3>
+                  <ul>
+                    {divergencias.map((item, index) => (
+                      <li key={`${item.escopo}-${index}`}>
+                        [{item.severity.toUpperCase()}] {item.escopo}: {item.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className={styles.warnings}>
+                  <h3>Resultado da conferencia</h3>
+                  <p className={styles.successMsg}>
+                    <CheckCircle2 size={16} />
+                    Nenhuma divergencia foi encontrada entre as bases tratadas e os arquivos finais
+                    salvos.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!conferenceError && conferenceState === "ready" && conferenceSummary && rows.length > 0 && (
+            <div className={styles.auditPanel}>
+              <h3>Historico salvo na competencia</h3>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Escopo</th>
+                      <th>ZIP Salvo</th>
+                      <th>Arquivos</th>
+                      <th>Tratados</th>
+                      <th>Recebidas</th>
+                      <th>Recuperadas</th>
+                      <th>Devolucoes</th>
+                      <th>Processado em</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.escopo}</td>
+                        <td>{row.arquivoNome}</td>
+                        <td>{row.reportFiles.length}</td>
+                        <td>{row.registrosTratados}</td>
+                        <td>{row.recebidas}</td>
+                        <td>{row.recuperadas}</td>
+                        <td>{row.devolucoes}</td>
+                        <td>{formatDate(row.criadoEm)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
       </>
     );
