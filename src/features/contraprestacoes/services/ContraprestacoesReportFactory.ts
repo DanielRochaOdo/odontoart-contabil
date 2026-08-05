@@ -30,6 +30,7 @@ export interface GeneratedWorkbook {
   reportId: ContraprestacoesReportId;
   fileName: string;
   buffer: Uint8Array;
+  rowCount: number;
 }
 
 const DATE_FORMAT = "dd/mm/yyyy";
@@ -176,6 +177,7 @@ async function buildWorkbook(definition: WorkbookDefinition): Promise<GeneratedW
     reportId: definition.reportId,
     fileName: definition.fileName,
     buffer: new Uint8Array(data),
+    rowCount: definition.rows.length,
   };
 }
 
