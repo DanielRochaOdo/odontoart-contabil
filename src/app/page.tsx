@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { ContraprestacoesSettings } from "@/features/contraprestacoes/domain/types";
+import { AgingSummary } from "@/features/aging/domain/types";
 import {
   CONTRAPRESTACOES_SETTINGS_STORAGE_KEY,
   DEFAULT_CONTRAPRESTACOES_SETTINGS,
@@ -168,7 +169,7 @@ interface ConferenceSummary {
 }
 
 type SubmitState = "idle" | "loading" | "success" | "error";
-type Module = "eventos" | "relatorios" | "contraprestacoes" | "configuracoes";
+type Module = "eventos" | "aging" | "relatorios" | "contraprestacoes" | "configuracoes";
 type ContraprestacoesModule =
   | "canceladas"
   | "recebidas"
@@ -378,6 +379,13 @@ export default function Home() {
   });
   const [settingsStatus, setSettingsStatus] = useState<SubmitState>("idle");
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [agingContabilidadeFile, setAgingContabilidadeFile] = useState<File | null>(null);
+  const [agingBaseFile, setAgingBaseFile] = useState<File | null>(null);
+  const [agingStatus, setAgingStatus] = useState<SubmitState>("idle");
+  const [agingError, setAgingError] = useState("");
+  const [agingSummary, setAgingSummary] = useState<AgingSummary | null>(null);
+  const [agingHint, setAgingHint] = useState("");
+  const [agingProgress, setAgingProgress] = useState<ActionProgress>(createIdleProgress);
 
   const [reportRows, setReportRows] = useState<ReportRow[]>([]);
   const [reportsState, setReportsState] = useState<ReportsState>("idle");
@@ -1017,6 +1025,45 @@ export default function Home() {
           : "Nao foi possivel baixar o ZIP consolidado da conferencia.",
       );
     }
+  }
+
+  function handleAgingBaseChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setAgingBaseFile(file);
+    if (!file) return;
+    void detectCompetenciaFromFile(file, "Base Aging Mensalidades", setAgingHint);
+  }
+
+  async function handleAgingSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!agingContabilidadeFile || !agingBaseFile) return;
+    setAgingStatus("loading");
+    setAgingError("");
+    setAgingSummary(null);
+    setAgingProgress({ active: true, value: 12, label: "Abrindo planilhas", detail: "Lendo a base Contabilidade e a base Aging Mensalidades." });
+    await flushProgressFrame();
+    try {
+      const { processAging } = await import("@/features/aging/services/AgingWorkbookProcessor");
+      setAgingProgress({ active: true, value: 45, label: "Aplicando tratativas", detail: "Filtrando lote, emissão, pagamento e separando PF/PJ." });
+      await flushProgressFrame();
+      const result = await processAging({
+        contabilidadeBuffer: new Uint8Array(await agingContabilidadeFile.arrayBuffer()),
+        baseBuffer: new Uint8Array(await agingBaseFile.arrayBuffer()),
+        competencia: (await import("@/features/eventos/services/utils")).parseCompetencia(competencia),
+      });
+      setAgingSummary(result.summary);
+      setAgingProgress({ active: true, value: 85, label: "Gerando arquivo", detail: "Preenchendo Recebimento Pendentes e preparando o download." });
+      await flushProgressFrame();
+      downloadBlob(new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), result.fileName);
+      setAgingProgress({ active: true, value: 100, label: "Concluido", detail: "Arquivo Aging pronto para download." });
+      setAgingStatus("success");
+    } catch (error) {
+      setAgingStatus("error");
+      setAgingProgress(createIdleProgress());
+      setAgingError(error instanceof Error ? error.message : "Nao foi possivel processar o Aging.");
+      return;
+    }
+    window.setTimeout(() => setAgingProgress(createIdleProgress()), 1800);
   }
 
   async function handleCanceladasProcessSubmit(event: FormEvent<HTMLFormElement>) {
@@ -2256,6 +2303,29 @@ export default function Home() {
     return renderContraprestacoesConferencia();
   }
 
+  function renderAging() {
+    return (
+      <>
+        <header className={styles.header}>
+          <h1>Aging</h1>
+          <p>Tratamento de Aging de mensalidades e preenchimento da base Contabilidade.</p>
+          <p className={styles.ruleNote}>Exclui parcelas sem Lote NF, NFs emitidas após a competência e pagamentos realizados até o fim da competência. O valor lançado é Imposto + Título.</p>
+        </header>
+        <section className={styles.card}>
+          <form onSubmit={handleAgingSubmit} className={styles.form}>
+            <div className={styles.grid}>
+              <label className={styles.field}><span>Competencia</span><input type="month" value={competencia} onChange={(event) => setCompetencia(event.target.value)} required />{agingHint && <small className={styles.helper}>{agingHint}</small>}</label>
+              <label className={styles.field}><span>Arquivo base Contabilidade (.xlsx)</span><input type="file" accept=".xlsx" onChange={(event) => setAgingContabilidadeFile(event.target.files?.[0] ?? null)} required /></label>
+              <label className={styles.field}><span>Base Aging Mensalidades (.xlsx)</span><input type="file" accept=".xlsx" onChange={handleAgingBaseChange} required /></label>
+            </div>
+            <div className={styles.actions}><button type="submit" disabled={!agingContabilidadeFile || !agingBaseFile || agingStatus === "loading"} className={styles.primaryBtn}>{agingStatus === "loading" ? <LoaderCircle size={15} className={styles.spin} /> : <Download size={15} />}<span>Executar Aging</span></button>{renderActionProgress(agingProgress)}</div>
+          </form>
+        </section>
+        {(agingStatus === "error" || agingStatus === "success" || agingSummary) && <section className={styles.feedback}>{agingStatus === "error" && <p className={styles.errorMsg}><AlertTriangle size={16} />{agingError}</p>}{agingStatus === "success" && <p className={styles.successMsg}><CheckCircle2 size={16} />Arquivo Aging processado e baixado.</p>}{agingSummary && <div className={styles.summary}><h2>Resumo da Competencia {agingSummary.competencia}</h2><ul><li>Entradas: {agingSummary.registrosEntrada}</li><li>Tratados: {agingSummary.registrosTratados}</li><li>PF: {agingSummary.registrosPf}</li><li>PJ: {agingSummary.registrosPj}</li><li>Excluidos sem lote: {agingSummary.excluidosSemLote}</li><li>Excluidos por emissão: {agingSummary.excluidosEmissao}</li><li>Excluidos por pagamento: {agingSummary.excluidosPagamento}</li></ul></div>}</section>}
+      </>
+    );
+  }
+
   function renderRelatorios() {
     const selectedRow =
       selectedReportId !== null
@@ -2522,6 +2592,10 @@ export default function Home() {
             <Layers3 size={16} />
             {!sidebarCollapsed && <span className={styles.moduleLabel}>Eventos</span>}
           </button>
+          <button type="button" className={`${styles.moduleItem} ${activeModule === "aging" ? styles.active : ""}`} title="Aging" onClick={() => setActiveModule("aging")}>
+            <FileSpreadsheet size={16} />
+            {!sidebarCollapsed && <span className={styles.moduleLabel}>Aging</span>}
+          </button>
           <div className={styles.menuGroup}>
             <button
               type="button"
@@ -2657,6 +2731,8 @@ export default function Home() {
         </div>
         {activeModule === "eventos"
           ? renderEventos()
+          : activeModule === "aging"
+            ? renderAging()
           : activeModule === "contraprestacoes"
             ? renderContraprestacoes()
             : activeModule === "configuracoes"
