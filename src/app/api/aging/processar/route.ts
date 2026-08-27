@@ -8,12 +8,11 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const contabilidade = formData.get("contabilidade");
     const base = formData.get("base");
-    if (!(contabilidade instanceof File) || !(base instanceof File)) {
-      return NextResponse.json({ message: "Envie os dois arquivos Excel do Aging." }, { status: 400 });
+    if (!(base instanceof File)) {
+      return NextResponse.json({ message: "Envie a Base Aging Mensalidades em formato Excel." }, { status: 400 });
     }
-    if (!contabilidade.name.toLowerCase().endsWith(".xlsx") || !base.name.toLowerCase().endsWith(".xlsx")) {
+    if (!base.name.toLowerCase().endsWith(".xlsx")) {
       return NextResponse.json({ message: "Use arquivos no formato .xlsx." }, { status: 400 });
     }
     const competenciaRaw = formData.get("competencia");
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
     const competencia = typeof competenciaRaw === "string" && /^\d{4}-\d{2}$/.test(competenciaRaw)
       ? parseCompetencia(competenciaRaw)
       : await detected.detect(baseBuffer, base.name) ?? parseCompetencia(undefined);
-    const result = await processAging({ contabilidadeBuffer: new Uint8Array(await contabilidade.arrayBuffer()), baseBuffer, competencia });
+    const result = await processAging({ baseBuffer, competencia });
     return new NextResponse(result.fileBuffer as BodyInit, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="${result.fileName}"`, "x-odonto-aging-summary": Buffer.from(JSON.stringify(result.summary)).toString("base64") } });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : "Nao foi possivel processar o Aging." }, { status: 500 });

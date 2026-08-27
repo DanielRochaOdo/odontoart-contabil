@@ -1,12 +1,15 @@
 ﻿"use client";
 
 import {
-  ChangeEvent,
   Dispatch,
+  DragEvent as ReactDragEvent,
   FormEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
   SetStateAction,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -338,6 +341,83 @@ async function detectCompetenciaLocally(
   };
 }
 
+interface FileDropzoneProps {
+  label: string;
+  accept?: string;
+  file: File | null;
+  onFileChange: (file: File | null) => void;
+  helper?: ReactNode;
+}
+
+function FileDropzone({
+  label,
+  accept,
+  file,
+  onFileChange,
+  helper,
+}: FileDropzoneProps) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function selectFirstFile(files: FileList | File[]): void {
+    onFileChange(files[0] ?? null);
+  }
+
+  function handleDrop(event: ReactDragEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    setIsDragging(false);
+    selectFirstFile(event.dataTransfer.files);
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    inputRef.current?.click();
+  }
+
+  return (
+    <div className={styles.field}>
+      <label htmlFor={inputId}>{label}</label>
+      <div
+        className={`${styles.fileDropzone} ${isDragging ? styles.fileDropzoneActive : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`${label}. Arraste e solte ou clique para selecionar.`}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={handleKeyDown}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+        }}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={inputRef}
+          id={inputId}
+          className={styles.fileInput}
+          type="file"
+          accept={accept}
+          onChange={(event) => selectFirstFile(event.target.files ?? [])}
+        />
+        <span className={styles.fileDropzoneText}>
+          {isDragging ? "Solte o arquivo aqui" : "Arraste e solte o arquivo ou clique para selecionar"}
+        </span>
+        {file && <span className={styles.fileDropzoneFile}>{file.name}</span>}
+      </div>
+      {helper && <small className={styles.helper}>{helper}</small>}
+    </div>
+  );
+}
+
 export default function Home() {
   const [activeModule, setActiveModule] = useState<Module>("eventos");
   const [activeContraprestacoesModule, setActiveContraprestacoesModule] =
@@ -379,7 +459,6 @@ export default function Home() {
   });
   const [settingsStatus, setSettingsStatus] = useState<SubmitState>("idle");
   const [settingsMessage, setSettingsMessage] = useState("");
-  const [agingContabilidadeFile, setAgingContabilidadeFile] = useState<File | null>(null);
   const [agingBaseFile, setAgingBaseFile] = useState<File | null>(null);
   const [agingStatus, setAgingStatus] = useState<SubmitState>("idle");
   const [agingError, setAgingError] = useState("");
@@ -472,20 +551,17 @@ export default function Home() {
     }
   }
 
-  function handleKnownChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleKnownChange(file: File | null) {
     setKnownFile(file);
     void detectCompetenciaFromFile(file, "Eventos Conhecidos", setCompetenciaHint);
   }
 
-  function handleLiquidChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleLiquidChange(file: File | null) {
     setLiquidFile(file);
     void detectCompetenciaFromFile(file, "Eventos Liquidados", setCompetenciaHint);
   }
 
-  function handleEscrituracaoChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleEscrituracaoChange(file: File | null) {
     setRecebidasFile(file);
     if (!file) {
       setRecebidasCompetenciaHint("");
@@ -522,8 +598,7 @@ export default function Home() {
     })();
   }
 
-  function handleRecuperadasChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleRecuperadasChange(file: File | null) {
     setRecuperadasFile(file);
     if (!file) {
       setRecuperadasCompetenciaHint("");
@@ -560,8 +635,7 @@ export default function Home() {
     })();
   }
 
-  function handleCanceladasProcessChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleCanceladasProcessChange(file: File | null) {
     setCanceladasProcessFile(file);
     if (!file) {
       setCanceladasCompetenciaHint("");
@@ -1027,8 +1101,7 @@ export default function Home() {
     }
   }
 
-  function handleAgingBaseChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function handleAgingBaseChange(file: File | null) {
     setAgingBaseFile(file);
     if (!file) return;
     void detectCompetenciaFromFile(file, "Base Aging Mensalidades", setAgingHint);
@@ -1036,23 +1109,22 @@ export default function Home() {
 
   async function handleAgingSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!agingContabilidadeFile || !agingBaseFile) return;
+    if (!agingBaseFile) return;
     setAgingStatus("loading");
     setAgingError("");
     setAgingSummary(null);
-    setAgingProgress({ active: true, value: 12, label: "Abrindo planilhas", detail: "Lendo a base Contabilidade e a base Aging Mensalidades." });
+    setAgingProgress({ active: true, value: 12, label: "Abrindo planilha", detail: "Lendo a Base Aging Mensalidades." });
     await flushProgressFrame();
     try {
       const { processAging } = await import("@/features/aging/services/AgingWorkbookProcessor");
-      setAgingProgress({ active: true, value: 45, label: "Aplicando tratativas", detail: "Filtrando lote, emissão, pagamento e separando PF/PJ." });
+      setAgingProgress({ active: true, value: 45, label: "Aplicando tratativas", detail: "Localizando a aba Planilha1 e separando PF/PJ." });
       await flushProgressFrame();
       const result = await processAging({
-        contabilidadeBuffer: new Uint8Array(await agingContabilidadeFile.arrayBuffer()),
         baseBuffer: new Uint8Array(await agingBaseFile.arrayBuffer()),
         competencia: (await import("@/features/eventos/services/utils")).parseCompetencia(competencia),
       });
       setAgingSummary(result.summary);
-      setAgingProgress({ active: true, value: 85, label: "Gerando arquivo", detail: "Preenchendo Recebimento Pendentes e preparando o download." });
+      setAgingProgress({ active: true, value: 85, label: "Gerando arquivo", detail: "Montando o arquivo no padrão do modelo." });
       await flushProgressFrame();
       downloadBlob(new Blob([toArrayBuffer(result.fileBuffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), result.fileName);
       setAgingProgress({ active: true, value: 100, label: "Concluido", detail: "Arquivo Aging pronto para download." });
@@ -1396,25 +1468,19 @@ export default function Home() {
                 {competenciaHint && <small className={styles.helper}>{competenciaHint}</small>}
               </label>
 
-              <label className={styles.field}>
-                <span>Eventos Conhecidos (.xlsx)</span>
-                <input
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={handleKnownChange}
-                  required
-                />
-              </label>
+              <FileDropzone
+                label="Eventos Conhecidos (.xlsx)"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file={knownFile}
+                onFileChange={handleKnownChange}
+              />
 
-              <label className={styles.field}>
-                <span>Eventos Liquidados (.xlsx)</span>
-                <input
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={handleLiquidChange}
-                  required
-                />
-              </label>
+              <FileDropzone
+                label="Eventos Liquidados (.xlsx)"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file={liquidFile}
+                onFileChange={handleLiquidChange}
+              />
             </div>
 
             <div className={styles.actions}>
@@ -1484,13 +1550,14 @@ export default function Home() {
     descricao: string;
     nota: string;
     origemLabel: string;
+    file: File | null;
     hint: string;
     status: SubmitState;
     errorMessage: string;
     summary: ContraprestacoesSummary | null;
     canSubmit: boolean;
     onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
-    onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+    onFileChange: (file: File | null) => void;
     progress: ActionProgress;
     successLabel: string;
   }) {
@@ -1499,6 +1566,7 @@ export default function Home() {
       descricao,
       nota,
       origemLabel,
+      file,
       hint,
       status,
       errorMessage,
@@ -1538,15 +1606,12 @@ export default function Home() {
                 {hint && <small className={styles.helper}>{hint}</small>}
               </label>
 
-              <label className={styles.field}>
-                <span>{origemLabel} (.xlsx)</span>
-                <input
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={onFileChange}
-                  required
-                />
-              </label>
+              <FileDropzone
+                label={`${origemLabel} (.xlsx)`}
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file={file}
+                onFileChange={onFileChange}
+              />
             </div>
 
             <div className={styles.actions}>
@@ -1611,6 +1676,7 @@ export default function Home() {
       nota:
         "O processamento aplica as tratativas operacionais da base, cruza parcelas com Canceladas para manter a mesma regra de comunicacao e exporta apenas os arquivos do escopo de Recebidas.",
       origemLabel: "Base Recebidas",
+      file: recebidasFile,
       hint: recebidasCompetenciaHint,
       status: recebidasStatus,
       errorMessage: recebidasErrorMessage,
@@ -1631,6 +1697,7 @@ export default function Home() {
       nota:
         "O processamento preserva o cruzamento com Canceladas e exporta apenas a base tratada e os arquivos finais do escopo de Recuperadas.",
       origemLabel: "Base Recuperadas",
+      file: recuperadasFile,
       hint: recuperadasCompetenciaHint,
       status: recuperadasStatus,
       errorMessage: recuperadasErrorMessage,
@@ -1687,18 +1754,13 @@ export default function Home() {
                   )}
                 </label>
 
-                <label className={styles.field}>
-                  <span>Base Canceladas mensal (.xlsx)</span>
-                  <input
-                    type="file"
-                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    onChange={handleCanceladasProcessChange}
-                  />
-                  <small className={styles.helper}>
-                    Exemplo: BASE CANCELADAS 03.2026 com a aba `original`. O pacote gerado inclui
-                    a base tratada e o arquivo final `Mensalidades Canceladas`.
-                  </small>
-                </label>
+                <FileDropzone
+                  label="Base Canceladas mensal (.xlsx)"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  file={canceladasProcessFile}
+                  onFileChange={handleCanceladasProcessChange}
+                  helper={<>Exemplo: BASE CANCELADAS 03.2026 com a aba `original`. O pacote gerado inclui a base tratada e o arquivo final `Mensalidades Canceladas`.</>}
+                />
               </div>
 
               <div className={styles.actions}>
@@ -2308,20 +2370,24 @@ export default function Home() {
       <>
         <header className={styles.header}>
           <h1>Aging</h1>
-          <p>Tratamento de Aging de mensalidades e preenchimento da base Contabilidade.</p>
-          <p className={styles.ruleNote}>Exclui parcelas sem Lote NF, NFs emitidas após a competência e pagamentos realizados até o fim da competência. O valor lançado é Imposto + Título.</p>
+          <p>Importação da Base Aging Mensalidades e geração do arquivo de Aging.</p>
+          <p className={styles.ruleNote}>A aba Planilha1 é separada em PF/PJ. O valor lançado em Recebimento Pendentes é Imposto + Título, conforme o modelo de saída.</p>
         </header>
         <section className={styles.card}>
           <form onSubmit={handleAgingSubmit} className={styles.form}>
             <div className={styles.grid}>
               <label className={styles.field}><span>Competencia</span><input type="month" value={competencia} onChange={(event) => setCompetencia(event.target.value)} required />{agingHint && <small className={styles.helper}>{agingHint}</small>}</label>
-              <label className={styles.field}><span>Arquivo base Contabilidade (.xlsx)</span><input type="file" accept=".xlsx" onChange={(event) => setAgingContabilidadeFile(event.target.files?.[0] ?? null)} required /></label>
-              <label className={styles.field}><span>Base Aging Mensalidades (.xlsx)</span><input type="file" accept=".xlsx" onChange={handleAgingBaseChange} required /></label>
+              <FileDropzone
+                label="Base Aging Mensalidades (.xlsx)"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file={agingBaseFile}
+                onFileChange={handleAgingBaseChange}
+              />
             </div>
-            <div className={styles.actions}><button type="submit" disabled={!agingContabilidadeFile || !agingBaseFile || agingStatus === "loading"} className={styles.primaryBtn}>{agingStatus === "loading" ? <LoaderCircle size={15} className={styles.spin} /> : <Download size={15} />}<span>Executar Aging</span></button>{renderActionProgress(agingProgress)}</div>
+            <div className={styles.actions}><button type="submit" disabled={!agingBaseFile || agingStatus === "loading"} className={styles.primaryBtn}>{agingStatus === "loading" ? <LoaderCircle size={15} className={styles.spin} /> : <Download size={15} />}<span>Executar Aging</span></button>{renderActionProgress(agingProgress)}</div>
           </form>
         </section>
-        {(agingStatus === "error" || agingStatus === "success" || agingSummary) && <section className={styles.feedback}>{agingStatus === "error" && <p className={styles.errorMsg}><AlertTriangle size={16} />{agingError}</p>}{agingStatus === "success" && <p className={styles.successMsg}><CheckCircle2 size={16} />Arquivo Aging processado e baixado.</p>}{agingSummary && <div className={styles.summary}><h2>Resumo da Competencia {agingSummary.competencia}</h2><ul><li>Entradas: {agingSummary.registrosEntrada}</li><li>Tratados: {agingSummary.registrosTratados}</li><li>PF: {agingSummary.registrosPf}</li><li>PJ: {agingSummary.registrosPj}</li><li>Excluidos sem lote: {agingSummary.excluidosSemLote}</li><li>Excluidos por emissão: {agingSummary.excluidosEmissao}</li><li>Excluidos por pagamento: {agingSummary.excluidosPagamento}</li></ul></div>}</section>}
+        {(agingStatus === "error" || agingStatus === "success" || agingSummary) && <section className={styles.feedback}>{agingStatus === "error" && <p className={styles.errorMsg}><AlertTriangle size={16} />{agingError}</p>}{agingStatus === "success" && <p className={styles.successMsg}><CheckCircle2 size={16} />Arquivo Aging processado e baixado.</p>}{agingSummary && <div className={styles.summary}><h2>Resumo da Competencia {agingSummary.competencia}</h2><ul><li>Registros importados: {agingSummary.registrosEntrada}</li><li>Registros tratados: {agingSummary.registrosTratados}</li><li>PF: {agingSummary.registrosPf}</li><li>PJ: {agingSummary.registrosPj}</li></ul></div>}</section>}
       </>
     );
   }

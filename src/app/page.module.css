@@ -332,7 +332,8 @@
 }
 
 .field span,
-.fieldInline span {
+.fieldInline span,
+.field > label {
   color: var(--text-secondary);
   font-size: 0.88rem;
   font-weight: 500;
@@ -381,6 +382,64 @@
   font-family: inherit;
   font-size: 0.75rem;
   cursor: pointer;
+}
+
+.fileDropzone {
+  min-height: 76px;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-deep);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.fileDropzone:hover,
+.fileDropzoneActive {
+  border-color: var(--border-brand);
+  background: var(--surface-glass);
+}
+
+.fileDropzone:focus-visible {
+  outline: none;
+  border-color: var(--border-emphasis);
+  box-shadow: var(--focus-shadow);
+}
+
+.field .fileDropzoneText {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.field .fileDropzoneFile {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .field input:focus,
