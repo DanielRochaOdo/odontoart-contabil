@@ -69,6 +69,27 @@ export interface ContraprestacoesSummary {
   totalValorPagamento: number;
 }
 
+export interface EmitidasSummary {
+  competencia: string;
+  registrosEntrada: number;
+  registrosPf: number;
+  registrosPj: number;
+  totalPf: number;
+  totalPj: number;
+}
+
+export interface EmitidasProcessInput {
+  competenciaRaw: string | null | undefined;
+  baseFile: File;
+}
+
+export interface EmitidasProcessOutput {
+  fileName: string;
+  fileBuffer: Uint8Array;
+  summary: EmitidasSummary;
+  competenciaDetectada: string | null;
+}
+
 export interface ContraprestacoesSettings {
   tarifaCartaoDebito: number;
   tarifaCartaoCredito: number;

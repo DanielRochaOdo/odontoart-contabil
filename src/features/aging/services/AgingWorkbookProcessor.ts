@@ -66,6 +66,10 @@ interface AgingSourceRow {
   nome: string;
   cpfCnpj: string;
   tipoPessoa: string;
+  tipoParcela: string;
+  tipoRecebimento: string;
+  competencia: Date | null;
+  dataPagamento: Date | null;
   dataVencimento: Date | null;
   imposto: number;
   titulo: number;
@@ -79,6 +83,10 @@ interface SourceColumns {
   nome: number;
   cpfCnpj: number;
   tipoPessoa: number;
+  tipoParcela: number;
+  tipoRecebimento: number;
+  competencia: number;
+  dataPagamento: number;
   dataVencimento: number;
   imposto: number;
   titulo: number;
@@ -144,6 +152,10 @@ function resolveSourceColumns(sheet: ExcelJS.Worksheet): { headerRow: number; co
       nome: findColumn(map, ["Nome Fantasia", "Nome"]),
       cpfCnpj: findColumn(map, ["CPF_CNPJ", "CPF/CNPJ", "CNPJ/CPF"]),
       tipoPessoa: findColumn(map, ["TIPO", "Tipo Pessoa", "PF/PJ"]),
+      tipoParcela: findColumn(map, ["Tipo Parcela"]),
+      tipoRecebimento: findColumn(map, ["Tipo Recebimento"]),
+      competencia: findColumn(map, ["Competencia", "CompetÃªncia"]),
+      dataPagamento: findColumn(map, ["Data Pagamento", "Pagamento"]),
       dataVencimento: findColumn(map, ["Data Vencimento", "Vencimento"]),
       imposto: findColumn(map, ["Imposto"]),
       titulo: findColumn(map, ["Título", "Titulo"]),
@@ -191,6 +203,7 @@ function resolveSourceSheet(workbook: ExcelJS.Workbook): ExcelJS.Worksheet {
 function readSourceRows(
   sheet: ExcelJS.Worksheet,
   layout: { headerRow: number; columns: SourceColumns },
+  shouldInclude: (row: AgingSourceRow) => boolean = () => true,
 ): AgingSourceRow[] {
   const rows: AgingSourceRow[] = [];
   for (let rowNumber = layout.headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
@@ -201,6 +214,10 @@ function readSourceRows(
       nome: coerceString(row.getCell(c.nome).value),
       cpfCnpj: coerceString(row.getCell(c.cpfCnpj).value),
       tipoPessoa: c.tipoPessoa > 0 ? coerceString(row.getCell(c.tipoPessoa).value) : "",
+      tipoParcela: c.tipoParcela > 0 ? coerceString(row.getCell(c.tipoParcela).value) : "",
+      tipoRecebimento: c.tipoRecebimento > 0 ? coerceString(row.getCell(c.tipoRecebimento).value) : "",
+      competencia: c.competencia > 0 ? coerceDate(row.getCell(c.competencia).value) : null,
+      dataPagamento: c.dataPagamento > 0 ? coerceDate(row.getCell(c.dataPagamento).value) : null,
       dataVencimento: coerceDate(row.getCell(c.dataVencimento).value),
       imposto: coerceNumber(row.getCell(c.imposto).value),
       titulo: coerceNumber(row.getCell(c.titulo).value),
@@ -208,7 +225,7 @@ function readSourceRows(
       nf: coerceString(row.getCell(c.nf).value),
       dtEmissao: coerceDate(row.getCell(c.dtEmissao).value),
     };
-    if (parsed.codigo || parsed.nome || parsed.nf) rows.push(parsed);
+    if ((parsed.codigo || parsed.nome || parsed.nf) && shouldInclude(parsed)) rows.push(parsed);
   }
   return rows;
 }
@@ -220,9 +237,40 @@ function isPessoaFisica(row: AgingSourceRow): boolean {
   return row.cpfCnpj.replace(/\D/g, "").length === 11;
 }
 
+function calendarDateKey(value: Date | null): string {
+  if (!value) return "";
+  return [
+    value.getUTCFullYear(),
+    String(value.getUTCMonth() + 1).padStart(2, "0"),
+    String(value.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function isRawAgingRow(row: AgingSourceRow, competencia: Competencia): boolean {
+  const reportDateKey = calendarDateKey(lastDayOfMonth(competencia));
+  const competenciaDateKey = `${competencia.ano}-${String(competencia.mes).padStart(2, "0")}-01`;
+
+  if (normalized(row.tipoParcela) !== "PLANO") return false;
+
+  const emissionDateKey = calendarDateKey(row.dtEmissao);
+  if (!emissionDateKey || emissionDateKey > reportDateKey) return false;
+
+  const paymentDateKey = calendarDateKey(row.dataPagamento);
+  if (paymentDateKey && paymentDateKey <= reportDateKey) return false;
+
+  // The manual July file excludes historical ENEL CE installments while
+  // retaining the current competency and other pending PF records.
+  const historicalEnel =
+    normalized(row.tipoRecebimento).includes("ENELCE") &&
+    calendarDateKey(row.competencia) < competenciaDateKey;
+  return !historicalEnel;
+}
+
 function daysBetween(left: Date, right: Date): number {
-  const leftUtc = Date.UTC(left.getFullYear(), left.getMonth(), left.getDate());
-  const rightUtc = Date.UTC(right.getFullYear(), right.getMonth(), right.getDate());
+  // ExcelJS reads date cells as UTC midnight. Use the UTC calendar components
+  // so the local timezone does not move a due date to the previous day.
+  const leftUtc = Date.UTC(left.getUTCFullYear(), left.getUTCMonth(), left.getUTCDate());
+  const rightUtc = Date.UTC(right.getUTCFullYear(), right.getUTCMonth(), right.getUTCDate());
   return Math.floor((leftUtc - rightUtc) / 86400000);
 }
 
@@ -269,6 +317,11 @@ function setFormula(cell: ExcelJS.Cell, formula: string, result: number): void {
   cell.numFmt = MONEY_FORMAT;
 }
 
+function setFormulaWithoutResult(cell: ExcelJS.Cell, formula: string): void {
+  cell.value = { formula };
+  cell.numFmt = MONEY_FORMAT;
+}
+
 function writeReceivingRow(sheet: ExcelJS.Worksheet, rowNumber: number, item: AgingOutputRow): void {
   const row = sheet.getRow(rowNumber);
   row.getCell("A").value = item.cpt;
@@ -308,8 +361,10 @@ function writeSummary(
     if (!bucket) return;
     const row = sheet.getRow(rowNumber);
     row.getCell("G").value = bucket.label;
-    row.getCell(type === "PJ" ? "I" : "H").value = totals[key];
-    row.getCell(type === "PJ" ? "I" : "H").numFmt = MONEY_FORMAT;
+    if (totals[key] !== 0) {
+      row.getCell(type === "PJ" ? "I" : "H").value = totals[key];
+      row.getCell(type === "PJ" ? "I" : "H").numFmt = MONEY_FORMAT;
+    }
     summaryRows[key] = rowNumber;
   });
 
@@ -370,6 +425,7 @@ function writeEventSheet(sheet: ExcelJS.Worksheet, title: string, extraHeaders: 
 
 function writeAgingSheet(
   sheet: ExcelJS.Worksheet,
+  receivingSheet: ExcelJS.Worksheet,
   competencia: Competencia,
   pf: ReceivingSectionResult,
   pj: ReceivingSectionResult,
@@ -397,16 +453,21 @@ function writeAgingSheet(
       const target = sheet.getRow(rowNumber).getCell(index + 2);
       const sourceRow = source.summaryRows[key];
       if (sourceRow) {
-        const result = coerceNumber(sheet.getRow(sourceRow).getCell(sourceColumn).value);
-        setFormula(target, `'Recebimento Pendentes'!${sourceColumn}${sourceRow}`, result);
+        // The source summaries live on Recebimento Pendentes. Reading from
+        // the AGING sheet here made every cached formula result equal to zero
+        // even though the cross-sheet formula itself pointed to the right cell.
+        const result = coerceNumber(receivingSheet.getRow(sourceRow).getCell(sourceColumn).value);
+        const formula = `'Recebimento Pendentes'!${sourceColumn}${sourceRow}`;
+        if (result !== 0) setFormula(target, formula, result);
+        else setFormulaWithoutResult(target, formula);
       } else {
-        target.value = 0;
+        target.value = null;
         target.numFmt = MONEY_FORMAT;
       }
     });
     const totalValue = bucketKeys.reduce((sum, key) => {
       const sourceRow = source.summaryRows[key];
-      return sourceRow ? sum + coerceNumber(sheet.getRow(sourceRow).getCell(sourceColumn).value) : sum;
+      return sourceRow ? sum + coerceNumber(receivingSheet.getRow(sourceRow).getCell(sourceColumn).value) : sum;
     }, 0);
     setFormula(sheet.getRow(rowNumber).getCell("I"), `SUM(B${rowNumber}:H${rowNumber})`, totalValue);
   };
@@ -443,7 +504,7 @@ function buildOutputWorkbook(
   const pjSection = writeReceivingSection(receivingSheet, 3, "PJ", pjRows, competencia);
   const pfTitleRow = pjSection.summaryTotalRow + 3;
   const pfSection = writeReceivingSection(receivingSheet, pfTitleRow, "PF", pfRows, competencia);
-  writeAgingSheet(agingSheet, competencia, pfSection, pjSection);
+  writeAgingSheet(agingSheet, receivingSheet, competencia, pfSection, pjSection);
   writeEventSheet(eventsConsolidated, "EVENTOS PENDENTES CONSOLIDADO");
   writeEventSheet(eventsPf, "EVENTOS PENDENTES PF", ["Valor Bruto", "INSS", "ISS"]);
   writeEventSheet(eventsPj, "EVENTOS PENDENTES PJ", ["Valor Bruto", "ISS", "IR"]);
@@ -483,12 +544,20 @@ export async function processAging(input: AgingProcessInput): Promise<AgingProce
   const sourceWorkbook = new ExcelJS.Workbook();
   await sourceWorkbook.xlsx.load(input.baseBuffer as unknown as ExcelJS.Buffer);
   const sourceSheet = resolveSourceSheet(sourceWorkbook);
-  const sourceRows = readSourceRows(sourceSheet, resolveSourceColumns(sourceSheet));
-  if (sourceRows.length === 0) throw new Error('A aba "Planilha1" nao possui registros para importar.');
+  const isPlanilha1 = normalized(sourceSheet.name) === "PLANILHA1";
+  const sourceRows = readSourceRows(
+    sourceSheet,
+    resolveSourceColumns(sourceSheet),
+    isPlanilha1 ? undefined : (row) => isRawAgingRow(row, input.competencia),
+  );
+  if (sourceRows.length === 0) {
+    throw new Error("A aba de origem nao possui recebimentos pendentes para a competencia informada.");
+  }
 
   const pfRows = toOutputRows(sourceRows.filter(isPessoaFisica));
   const pjRows = toOutputRows(sourceRows.filter((row) => !isPessoaFisica(row)));
   const outputWorkbook = buildOutputWorkbook(input.competencia, pfRows, pjRows);
+  outputWorkbook.calcProperties.fullCalcOnLoad = true;
   const data = await outputWorkbook.xlsx.writeBuffer();
   const summary: AgingSummary = {
     competencia: competenciaToString(input.competencia),

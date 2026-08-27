@@ -31,7 +31,10 @@ import {
   RefreshCcw,
   X,
 } from "lucide-react";
-import { ContraprestacoesSettings } from "@/features/contraprestacoes/domain/types";
+import {
+  ContraprestacoesSettings,
+  EmitidasSummary,
+} from "@/features/contraprestacoes/domain/types";
 import { AgingSummary } from "@/features/aging/domain/types";
 import {
   CONTRAPRESTACOES_SETTINGS_STORAGE_KEY,
@@ -175,6 +178,7 @@ type SubmitState = "idle" | "loading" | "success" | "error";
 type Module = "eventos" | "aging" | "relatorios" | "contraprestacoes" | "configuracoes";
 type ContraprestacoesModule =
   | "canceladas"
+  | "emitidas"
   | "recebidas"
   | "recuperadas"
   | "conferencia";
@@ -444,6 +448,12 @@ export default function Home() {
   const [recuperadasSummary, setRecuperadasSummary] = useState<ContraprestacoesSummary | null>(null);
   const [recuperadasCompetenciaHint, setRecuperadasCompetenciaHint] = useState("");
   const [recuperadasProgress, setRecuperadasProgress] = useState<ActionProgress>(createIdleProgress);
+  const [emitidasFile, setEmitidasFile] = useState<File | null>(null);
+  const [emitidasStatus, setEmitidasStatus] = useState<SubmitState>("idle");
+  const [emitidasErrorMessage, setEmitidasErrorMessage] = useState("");
+  const [emitidasSummary, setEmitidasSummary] = useState<EmitidasSummary | null>(null);
+  const [emitidasCompetenciaHint, setEmitidasCompetenciaHint] = useState("");
+  const [emitidasProgress, setEmitidasProgress] = useState<ActionProgress>(createIdleProgress);
   const [settingsValues, setSettingsValues] = useState<ContraprestacoesSettings>(() => {
     if (typeof window === "undefined") return DEFAULT_CONTRAPRESTACOES_SETTINGS;
 
@@ -518,6 +528,10 @@ export default function Home() {
   const canSubmitRecuperadas = useMemo(
     () => Boolean(recuperadasFile && competencia) && recuperadasStatus !== "loading",
     [recuperadasFile, competencia, recuperadasStatus],
+  );
+  const canSubmitEmitidas = useMemo(
+    () => Boolean(emitidasFile && competencia) && emitidasStatus !== "loading",
+    [emitidasFile, competencia, emitidasStatus],
   );
 
   async function detectCompetenciaFromFile(
@@ -633,6 +647,16 @@ export default function Home() {
         );
       }
     })();
+  }
+
+  function handleEmitidasChange(file: File | null) {
+    setEmitidasFile(file);
+    if (!file) {
+      setEmitidasCompetenciaHint("");
+      return;
+    }
+
+    void detectCompetenciaFromFile(file, "Contraprestacoes Emitidas", setEmitidasCompetenciaHint);
   }
 
   function handleCanceladasProcessChange(file: File | null) {
@@ -893,6 +917,87 @@ export default function Home() {
     });
   }
 
+  async function handleEmitidasSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!emitidasFile) return;
+
+    setEmitidasStatus("loading");
+    setEmitidasErrorMessage("");
+    setEmitidasSummary(null);
+    setEmitidasProgress({
+      active: true,
+      value: 10,
+      label: "Abrindo planilha",
+      detail: `Lendo ${emitidasFile.name} para identificar competencia e preparar o arquivo Equacao.`,
+    });
+    await flushProgressFrame();
+
+    try {
+      setEmitidasProgress({
+        active: true,
+        value: 30,
+        label: "Carregando motor local",
+        detail: "Preparando a leitura da Escrituração e a separacao automatica entre PF e PJ.",
+      });
+      await flushProgressFrame();
+
+      const { processEmitidasInBrowser } = await import(
+        "@/features/contraprestacoes/services/EmitidasWorkbookProcessor"
+      );
+
+      setEmitidasProgress({
+        active: true,
+        value: 52,
+        label: "Processando faturamento",
+        detail: "Aplicando as regras de competencia, vencimento e receita nao ganha.",
+      });
+      await flushProgressFrame();
+
+      const result = await processEmitidasInBrowser({
+        competenciaRaw: competencia,
+        baseFile: emitidasFile,
+      });
+
+      if (result.competenciaDetectada && result.competenciaDetectada !== competencia) {
+        setCompetencia(result.competenciaDetectada);
+        setEmitidasCompetenciaHint(
+          `Competencia confirmada localmente em Contraprestacoes Emitidas: ${result.competenciaDetectada}.`,
+        );
+      }
+
+      setEmitidasSummary(result.summary);
+      setEmitidasProgress({
+        active: true,
+        value: 84,
+        label: "Gerando arquivo",
+        detail: "Montando as abas Faturamento PF CLINICO e Faturamento PJ.",
+      });
+      await flushProgressFrame();
+
+      downloadBlob(
+        new Blob([toArrayBuffer(result.fileBuffer)], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+        result.fileName,
+      );
+
+      setEmitidasProgress({
+        active: true,
+        value: 100,
+        label: "Concluido",
+        detail: "Arquivo de Faturamento Emitidas pronto para download.",
+      });
+      setEmitidasStatus("success");
+    } catch (error) {
+      setEmitidasStatus("error");
+      setEmitidasProgress(createIdleProgress());
+      setEmitidasErrorMessage(error instanceof Error ? error.message : DEFAULT_CONTRAP_ERROR);
+      return;
+    }
+
+    window.setTimeout(() => setEmitidasProgress(createIdleProgress()), 1800);
+  }
+
   const loadReports = useCallback(async () => {
     setReportsState("loading");
     setReportsError("");
@@ -1117,7 +1222,7 @@ export default function Home() {
     await flushProgressFrame();
     try {
       const { processAging } = await import("@/features/aging/services/AgingWorkbookProcessor");
-      setAgingProgress({ active: true, value: 45, label: "Aplicando tratativas", detail: "Localizando a aba Planilha1 e separando PF/PJ." });
+      setAgingProgress({ active: true, value: 45, label: "Aplicando tratativas", detail: "Localizando a aba de origem, filtrando pendências e separando PF/PJ." });
       await flushProgressFrame();
       const result = await processAging({
         baseBuffer: new Uint8Array(await agingBaseFile.arrayBuffer()),
@@ -1708,6 +1813,99 @@ export default function Home() {
       progress: recuperadasProgress,
       successLabel: "Executar Fluxo Recuperadas",
     });
+  }
+
+  function renderContraprestacoesEmitidas() {
+    return (
+      <>
+        <header className={styles.header}>
+          <h1>Contraprestacoes Emitidas</h1>
+          <p>
+            Importe a planilha Faturamento - Escrituracao para gerar o arquivo Faturamento -
+            Equacao com as abas PF e PJ.
+          </p>
+          <p className={styles.ruleNote}>
+            A competencia e identificada pelo nome do arquivo. Os registros sao separados pela
+            coluna Tipo e a receita nao ganha e distribuida conforme as regras de 30 dias do
+            modelo de Equacao.
+          </p>
+        </header>
+
+        <section className={styles.card}>
+          <form onSubmit={handleEmitidasSubmit} className={styles.form}>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span>Competencia</span>
+                <input
+                  type="month"
+                  value={competencia ?? ""}
+                  onChange={(event) => setCompetencia(event.target.value)}
+                  required
+                />
+                {emitidasCompetenciaHint && (
+                  <small className={styles.helper}>{emitidasCompetenciaHint}</small>
+                )}
+              </label>
+
+              <FileDropzone
+                label="Faturamento - Escrituracao (.xlsx)"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file={emitidasFile}
+                onFileChange={handleEmitidasChange}
+                helper="Use a planilha mensal de Escrituracao. O arquivo Equacao sera baixado apos o processamento."
+              />
+            </div>
+
+            <div className={styles.actions}>
+              <button
+                type="submit"
+                disabled={!canSubmitEmitidas}
+                className={styles.primaryBtn}
+              >
+                {emitidasStatus === "loading" ? (
+                  <LoaderCircle size={15} className={styles.spin} />
+                ) : (
+                  <Download size={15} />
+                )}
+                <span>Gerar Faturamento Emitidas</span>
+              </button>
+              {renderActionProgress(emitidasProgress)}
+            </div>
+          </form>
+        </section>
+
+        {(emitidasStatus === "error" || emitidasStatus === "success" || emitidasSummary) && (
+          <section className={styles.feedback}>
+            {emitidasStatus === "error" && (
+              <p className={styles.errorMsg}>
+                <AlertTriangle size={16} />
+                {emitidasErrorMessage}
+              </p>
+            )}
+
+            {emitidasStatus === "success" && (
+              <p className={styles.successMsg}>
+                <CheckCircle2 size={16} />
+                Arquivo Faturamento - Equacao gerado e o download foi iniciado.
+              </p>
+            )}
+
+            {emitidasSummary && (
+              <div className={styles.summary}>
+                <h2>Resumo da Competencia {emitidasSummary.competencia}</h2>
+                <ul>
+                  <li>Entradas na Escrituracao: {emitidasSummary.registrosEntrada}</li>
+                  <li>Registros PF: {emitidasSummary.registrosPf}</li>
+                  <li>Total PF: {formatCurrency(emitidasSummary.totalPf)}</li>
+                  <li>Registros PJ: {emitidasSummary.registrosPj}</li>
+                  <li>Total PJ: {formatCurrency(emitidasSummary.totalPj)}</li>
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+      </>
+    );
   }
 
   function renderContraprestacoesCanceladas() {
@@ -2360,6 +2558,7 @@ export default function Home() {
 
   function renderContraprestacoes() {
     if (activeContraprestacoesModule === "canceladas") return renderContraprestacoesCanceladas();
+    if (activeContraprestacoesModule === "emitidas") return renderContraprestacoesEmitidas();
     if (activeContraprestacoesModule === "recebidas") return renderContraprestacoesRecebidas();
     if (activeContraprestacoesModule === "recuperadas") return renderContraprestacoesRecuperadas();
     return renderContraprestacoesConferencia();
@@ -2371,7 +2570,7 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Aging</h1>
           <p>Importação da Base Aging Mensalidades e geração do arquivo de Aging.</p>
-          <p className={styles.ruleNote}>A aba Planilha1 é separada em PF/PJ. O valor lançado em Recebimento Pendentes é Imposto + Título, conforme o modelo de saída.</p>
+          <p className={styles.ruleNote}>A aba Planilha1 (quando presente) ou a aba bruta é filtrada pelas pendências da competência e separada em PF/PJ. O valor lançado em Recebimento Pendentes é Imposto + Título, conforme o modelo de saída.</p>
         </header>
         <section className={styles.card}>
           <form onSubmit={handleAgingSubmit} className={styles.form}>
@@ -2602,13 +2801,19 @@ export default function Home() {
               gerar apenas os relatorios de recuperadas.
             </p>
 
-            <h3>5. Configuracoes</h3>
+            <h3>5. Contraprestacoes Emitidas</h3>
+            <p>
+              Envie a planilha mensal de Faturamento - Escrituracao. O sistema identifica a
+              competencia, separa os registros PF/PJ e gera o arquivo Faturamento - Equacao.
+            </p>
+
+            <h3>6. Configuracoes</h3>
             <p>
               Antes de processar contraprestacoes, revise as tarifas de cartao, debito em conta e
               PIX para garantir que os calculos usem os valores vigentes.
             </p>
 
-            <h3>6. Relatorios</h3>
+            <h3>7. Relatorios</h3>
             <p>
               Consulte o historico de processamentos por competencia e use Ver detalhes para
               auditoria e conferencia.
@@ -2711,6 +2916,22 @@ export default function Home() {
                   }}
                 >
                   Canceladas
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.subMenuItem} ${
+                    activeModule === "contraprestacoes" &&
+                    activeContraprestacoesModule === "emitidas"
+                      ? styles.activeSubMenuItem
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setActiveModule("contraprestacoes");
+                    setActiveContraprestacoesModule("emitidas");
+                    if (sidebarCollapsed) setContraprestacoesMenuOpen(false);
+                  }}
+                >
+                  Emitidas
                 </button>
                 <button
                   type="button"
