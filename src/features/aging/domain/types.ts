@@ -6,13 +6,9 @@ export interface AgingSummary {
   registrosTratados: number;
   registrosPf: number;
   registrosPj: number;
-  excluidosSemLote: number;
-  excluidosEmissao: number;
-  excluidosPagamento: number;
 }
 
 export interface AgingProcessInput {
-  contabilidadeBuffer: Uint8Array;
   baseBuffer: Uint8Array;
   competencia: Competencia;
 }
